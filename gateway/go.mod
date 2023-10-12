@@ -3,6 +3,7 @@ module github.com/KISS-Keep-It-Simple-Stupid/TrekDestinyBackend/gateway
 go 1.20
 
 require (
+	github.com/go-chi/chi/v5 v5.0.10
 	github.com/golang/protobuf v1.5.3
 	google.golang.org/grpc v1.58.3
 )
