@@ -1,0 +1,13 @@
+#!/bin/bash
+arg=$1
+if [[ $arg == "proto" ]]; then
+    read -p "protofile : " protofile
+    read -p "service : " service
+    read -p "is is gateway ? " is_gateway
+    if [[ $is_gateway == "y" ]]; then
+        protoc --proto_path=protos protos/$protofile --go_out=gateway/services --go-grpc_out=gateway/services
+        mv gateway/services/pb gateway/services/$service
+    else
+        protoc --proto_path=protos protos/$protofile --go_out=services/$service --go-grpc_out=services/$service
+    fi
+fi
