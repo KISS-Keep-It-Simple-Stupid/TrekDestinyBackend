@@ -9,7 +9,8 @@ message loginRequest{
 
 
 message loginResponse {
-    string Message = 1;
+    string AccessToken = 1;
+    string RefreshToken = 2;
 }
 
 
@@ -17,6 +18,11 @@ message SignUpRequest {
     string Email = 1 ;
     string UserName = 2;
     string Password = 3;
+    string FirstName = 4;
+    string LastName = 5;
+    string BirthDate =6 ;
+    string City = 7 ;
+    string Country = 8 ;
 }
 
 message SignUpResponse {

@@ -5,19 +5,30 @@ import (
 	"net/http"
 
 	"github.com/KISS-Keep-It-Simple-Stupid/TrekDestinyBackend/gateway/handlers"
+	"github.com/spf13/viper"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
-const port string = ":9090"
-
 func main() {
-	handler := handlers.New()
+	viper.SetConfigFile(".env")
+	viper.ReadInConfig()
+	var (
+		auth_service_address = viper.Get("AUTH_SERVICE_ADDRESS").(string)
+		port                 = viper.Get("SERVERPORT").(string)
+	)
+	auth_conn, err := grpc.Dial(auth_service_address, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		log.Fatalln(err.Error())
+	}
+	handler := handlers.New(auth_conn)
 	routes := getRoutes(handler)
 	server := http.Server{
-		Addr:    port,
+		Addr:    ":" + port,
 		Handler: routes,
 	}
 
-	err := server.ListenAndServe()
+	err = server.ListenAndServe()
 	if err != nil {
 		log.Fatalln(err.Error())
 	}
