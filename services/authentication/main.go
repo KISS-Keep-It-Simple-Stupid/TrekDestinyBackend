@@ -14,6 +14,10 @@ import (
 )
 
 func main() {
+	// setup config variables
+	viper.SetConfigFile(".env")
+	viper.ReadInConfig()
+	// setup database
 	dbConn, err := driver.NewDBConnection()
 	if err != nil {
 		log.Fatalln(err.Error())
@@ -25,6 +29,8 @@ func main() {
 	if err != nil {
 		log.Fatalln(err.Error())
 	}
+
+	// setting up grpc server
 	s := grpc.NewServer()
 	pb.RegisterAuthServer(s, server)
 	fmt.Printf("authentication grpc server is listening on port %s\n", port)

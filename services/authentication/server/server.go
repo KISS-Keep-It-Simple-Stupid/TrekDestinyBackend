@@ -4,9 +4,15 @@ import (
 	"context"
 	"errors"
 	"log"
+	"strconv"
+	"time"
 
 	"github.com/KISS-Keep-It-Simple-Stupid/TrekDestinyBackend/services/authentication/db"
+	"github.com/KISS-Keep-It-Simple-Stupid/TrekDestinyBackend/services/authentication/email"
+	"github.com/KISS-Keep-It-Simple-Stupid/TrekDestinyBackend/services/authentication/helper"
+	"github.com/KISS-Keep-It-Simple-Stupid/TrekDestinyBackend/services/authentication/models"
 	"github.com/KISS-Keep-It-Simple-Stupid/TrekDestinyBackend/services/authentication/pb"
+	"github.com/spf13/viper"
 )
 
 type Repository struct {
@@ -39,6 +45,36 @@ func (s *Repository) Signup(ctx context.Context, r *pb.SignUpRequest) (*pb.SignU
 		log.Println(err)
 		return nil, respErr
 	}
+
+	// sending verification email
+	var (
+		from             = viper.Get("EMAILHOST").(string)
+		password         = viper.Get("EMAILPASSWORD").(string)
+		frontend_address = viper.Get("FRONTEND_ADDRESS").(string)
+	)
+	access_exp_time, _ := strconv.Atoi(viper.Get("ACCESS_EXP_TIME").(string))
+	// create jwt token
+	jwtClaim := models.JwtClaims{
+		UserName: r.UserName,
+		ExpDate:  time.Now().Add(time.Duration(time.Duration(access_exp_time) * time.Minute)),
+	}
+	token, err := helper.NewToken(&jwtClaim)
+	if err != nil {
+		respErr := errors.New("internal server error while generating jwt token for verification - authentication service")
+		log.Println(err)
+		return nil, respErr
+	}
+
+	// creating email
+	verificationEmail := email.Email{
+		From:     from,
+		Password: password,
+		To:       []string{r.Email},
+		Text:     "Hello " + r.FirstName + "\ncheck link below to verify your email\n" + frontend_address + "/verify-email?token=" + token,
+	}
+
+	go verificationEmail.Send()
+
 	resp := pb.SignUpResponse{
 		Message: "success",
 	}

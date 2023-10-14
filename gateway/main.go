@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 
@@ -28,6 +29,7 @@ func main() {
 		Handler: routes,
 	}
 
+	fmt.Println("gateway is up on port :" , port)
 	err = server.ListenAndServe()
 	if err != nil {
 		log.Fatalln(err.Error())

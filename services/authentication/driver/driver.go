@@ -9,8 +9,6 @@ import (
 )
 
 func NewDBConnection() (*sql.DB, error) {
-	viper.SetConfigFile(".env")
-	viper.ReadInConfig()
 	var (
 		host = viper.Get("DBHOST").(string)
 		port = viper.Get("DBPORT").(string)

@@ -3,6 +3,7 @@ module github.com/KISS-Keep-It-Simple-Stupid/TrekDestinyBackend/services/authent
 go 1.20
 
 require (
+	github.com/golang-jwt/jwt/v5 v5.0.0
 	github.com/golang/protobuf v1.5.3
 	github.com/lib/pq v1.10.9
 	github.com/spf13/viper v1.17.0
