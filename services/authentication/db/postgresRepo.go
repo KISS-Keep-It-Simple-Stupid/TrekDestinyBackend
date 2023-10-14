@@ -22,8 +22,8 @@ func NewPostgresRepository(db *sql.DB) Repository {
 func (s *PostgresRepository) InsertUser(user *pb.SignUpRequest) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
 	defer cancel()
-	query := `insert into member (email , username , password , firstname , lastname , birthdate , city , country)
-			  values ($1,$2,$3,$4,$5,$6,$7,$8)`
+	query := `insert into member (email , username , password , firstname , lastname , birthdate , city , country ,gender)
+			  values ($1,$2,$3,$4,$5,$6,$7,$8,$9)`
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.MinCost)
 	if err != nil {
 		return err
@@ -33,7 +33,7 @@ func (s *PostgresRepository) InsertUser(user *pb.SignUpRequest) error {
 		return err
 	}
 	_, err = s.DB.ExecContext(ctx, query, user.Email, user.UserName, string(hashedPassword),
-		user.FirstName, user.LastName, birthdate, user.City, user.Country)
+		user.FirstName, user.LastName, birthdate, user.City, user.Country , user.Gender)
 	return err
 }
 

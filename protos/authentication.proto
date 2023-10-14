@@ -15,14 +15,15 @@ message loginResponse {
 
 
 message SignUpRequest {
-    string Email = 1 ;
-    string UserName = 2;
-    string Password = 3;
-    string FirstName = 4;
-    string LastName = 5;
-    string BirthDate =6 ;
-    string City = 7 ;
-    string Country = 8 ;
+    string Email =1;
+    string UserName =2;
+    string Password =3;
+    string FirstName =4;
+    string LastName =5;
+    string BirthDate =6;
+    string City = 7;
+    string Country = 8;
+    int32 Gender = 9; 
 }
 
 message SignUpResponse {
