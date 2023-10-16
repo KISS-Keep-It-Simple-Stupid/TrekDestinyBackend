@@ -23,7 +23,7 @@ func NewPostgresRepository(db *sql.DB) Repository {
 func (s *PostgresRepository) InsertUser(user *pb.SignUpRequest) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
 	defer cancel()
-	query := `insert into member (email , username , password , firstname , lastname , birthdate , city , country ,gender)
+	query := `insert into members (email , username , password , firstname , lastname , birthdate , city , country ,gender)
 			  values ($1,$2,$3,$4,$5,$6,$7,$8,$9)`
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.MinCost)
 	if err != nil {
@@ -42,7 +42,7 @@ func (s *PostgresRepository) CheckUserExistance(userEmail, userUserName string) 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
 	defer cancel()
 	temp := 0
-	query := `select id from member where email = $1 or username = $2`
+	query := `select id from members where email = $1 or username = $2`
 	err := s.DB.QueryRowContext(ctx, query, userEmail, userUserName).Scan(&temp)
 	if err != nil {
 		if err != sql.ErrNoRows {
@@ -58,7 +58,7 @@ func (s *PostgresRepository) GetLoginCridentials(userEmail string) (*models.Logi
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
 	defer cancel()
 	user := &models.LoginCridentials{}
-	query := `select email , password , username , firstname , isverified from member where email = $1`
+	query := `select email , password , username , firstname , isverified from members where email = $1`
 	err := s.DB.QueryRowContext(ctx, query, userEmail).Scan(&user.Email, &user.Password, &user.UserName, &user.FirstName, &user.IsVerified)
 	if err != nil {
 		if err != sql.ErrNoRows {

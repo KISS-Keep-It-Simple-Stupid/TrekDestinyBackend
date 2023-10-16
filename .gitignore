@@ -21,6 +21,6 @@
 go.work
 
 # General files and directories
-.env
+*.env
 .vscode
-.sql
+*.sql

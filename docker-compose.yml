@@ -1,0 +1,44 @@
+version: '3.8'
+
+services:
+  gateway:
+    build: ./gateway/
+    container_name: gateway
+    restart: on-failure
+    depends_on:
+      - authentication
+    ports:
+      - 9090:9090
+    networks:
+      - trekdestiny
+    volumes:
+      - type: bind
+        source: ./gateway/
+        target: /app
+  authentication:
+    build: ./services/authentication/
+    container_name: authentication
+    restart: on-failure
+    depends_on:
+      - db
+    networks:
+      - trekdestiny
+    volumes:
+      - type: bind
+        source: ./services/authentication
+        target: /app
+  db:
+    image: postgres:16.0-alpine
+    container_name: db
+    restart: on-failure
+    networks:
+      - trekdestiny
+    volumes:
+      - trekdestinyData:/var/lib/postgresql/data
+    env_file:
+      - postgres.env
+
+volumes:
+  trekdestinyData:
+networks:
+  trekdestiny:
