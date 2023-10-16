@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"time"
 
+	"github.com/KISS-Keep-It-Simple-Stupid/TrekDestinyBackend/services/authentication/models"
 	"github.com/KISS-Keep-It-Simple-Stupid/TrekDestinyBackend/services/authentication/pb"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -33,7 +34,7 @@ func (s *PostgresRepository) InsertUser(user *pb.SignUpRequest) error {
 		return err
 	}
 	_, err = s.DB.ExecContext(ctx, query, user.Email, user.UserName, string(hashedPassword),
-		user.FirstName, user.LastName, birthdate, user.City, user.Country , user.Gender)
+		user.FirstName, user.LastName, birthdate, user.City, user.Country, user.Gender)
 	return err
 }
 
@@ -51,4 +52,19 @@ func (s *PostgresRepository) CheckUserExistance(userEmail, userUserName string) 
 		return false, nil
 	}
 	return true, nil
+}
+
+func (s *PostgresRepository) GetLoginCridentials(userEmail string) (*models.LoginCridentials, bool, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
+	defer cancel()
+	user := &models.LoginCridentials{}
+	query := `select email , password , username , firstname , isverified from member where email = $1`
+	err := s.DB.QueryRowContext(ctx, query, userEmail).Scan(&user.Email, &user.Password, &user.UserName, &user.FirstName, &user.IsVerified)
+	if err != nil {
+		if err != sql.ErrNoRows {
+			return nil, false, err
+		}
+		return nil, false, nil
+	}
+	return user, true, nil
 }

@@ -11,6 +11,7 @@ message loginRequest{
 message loginResponse {
     string AccessToken = 1;
     string RefreshToken = 2;
+    string Message =3;
 }
 
 
@@ -24,6 +25,7 @@ message SignUpRequest {
     string City = 7;
     string Country = 8;
     int32 Gender = 9; 
+    bool IsVerified= 10;
 }
 
 message SignUpResponse {

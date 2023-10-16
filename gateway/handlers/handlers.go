@@ -25,22 +25,46 @@ func (s *Repository) SignUp(w http.ResponseWriter, r *http.Request) {
 	signupReq := &auth_pb.SignUpRequest{}
 	postData, err := io.ReadAll(r.Body)
 	if err != nil {
-		helpers.RespGenerator(w, "wrong post body format", http.StatusBadRequest)
+		helpers.MessageGenerator(w, "wrong post body format", http.StatusBadRequest)
 		return
 	}
 	err = json.Unmarshal(postData, signupReq)
 	if err != nil {
-		helpers.RespGenerator(w, "wrong post body fields", http.StatusBadRequest)
+		helpers.MessageGenerator(w, "wrong post body fields", http.StatusBadRequest)
 		return
 	}
 	resp, err := s.auth_client.Signup(context.Background(), signupReq)
 	if err != nil {
-		helpers.RespGenerator(w, err.Error(), http.StatusInternalServerError)
+		helpers.MessageGenerator(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 	if resp.Message == "success" {
-		helpers.RespGenerator(w, resp.Message, http.StatusCreated)
+		helpers.MessageGenerator(w, resp.Message, http.StatusCreated)
 	} else {
-		helpers.RespGenerator(w, resp.Message, http.StatusBadRequest)
+		helpers.MessageGenerator(w, resp.Message, http.StatusBadRequest)
+	}
+}
+
+func (s *Repository) Login(w http.ResponseWriter, r *http.Request) {
+	loginReq := &auth_pb.LoginRequest{}
+	postData, err := io.ReadAll(r.Body)
+	if err != nil {
+		helpers.MessageGenerator(w, "wrong post body format", http.StatusBadRequest)
+		return
+	}
+	err = json.Unmarshal(postData, loginReq)
+	if err != nil {
+		helpers.MessageGenerator(w, "wrong post body fields", http.StatusBadRequest)
+		return
+	}
+	resp, err := s.auth_client.Login(context.Background(), loginReq)
+	if err != nil {
+		helpers.MessageGenerator(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	if resp.Message == "success" {
+		helpers.ResponseGenerator(w, resp)
+	} else {
+		helpers.MessageGenerator(w, resp.Message, http.StatusBadRequest)
 	}
 }

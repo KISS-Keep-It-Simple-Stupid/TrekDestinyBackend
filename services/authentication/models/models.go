@@ -11,3 +11,11 @@ type JwtClaims struct {
 	UserName string
 	ExpDate  time.Time
 }
+
+type LoginCridentials struct {
+	Email      string
+	Password   string
+	UserName   string
+	FirstName  string
+	IsVerified bool
+}
