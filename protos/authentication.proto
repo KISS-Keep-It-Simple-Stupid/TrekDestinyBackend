@@ -32,7 +32,17 @@ message SignUpResponse {
     string Message = 1; 
 }
 
+message refreshRequest {
+    string RefreshToken = 1; 
+}
+
+message refreshResponse {
+    string Message = 1; 
+    string AccessToken = 2;
+}
+
 service Auth {
     rpc Signup(SignUpRequest) returns (SignUpResponse);
     rpc Login(loginRequest) returns (loginResponse);
+    rpc Refresh(refreshRequest) returns(refreshResponse);
 }

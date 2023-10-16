@@ -15,3 +15,18 @@ func NewToken(claims *models.JwtClaims) (string, error) {
 	}
 	return token_string, nil
 }
+
+func DecodeToken(token string) (*models.JwtClaims, error) {
+	claims := &models.JwtClaims{}
+	key := viper.Get("JWTKEY").(string)
+	jwttoken, err := jwt.ParseWithClaims(token, claims, func(token *jwt.Token) (interface{}, error) {
+		return []byte(key), nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	if !jwttoken.Valid {
+		return nil, err
+	}
+	return claims, nil
+}

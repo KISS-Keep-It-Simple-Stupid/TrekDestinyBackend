@@ -12,6 +12,7 @@ import (
 	"github.com/KISS-Keep-It-Simple-Stupid/TrekDestinyBackend/services/authentication/helper"
 	"github.com/KISS-Keep-It-Simple-Stupid/TrekDestinyBackend/services/authentication/models"
 	"github.com/KISS-Keep-It-Simple-Stupid/TrekDestinyBackend/services/authentication/pb"
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/spf13/viper"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -56,8 +57,8 @@ func (s *Repository) Signup(ctx context.Context, r *pb.SignUpRequest) (*pb.SignU
 	access_exp_time, _ := strconv.Atoi(viper.Get("ACCESS_EXP_TIME").(string))
 	// create jwt token
 	jwtClaim := models.JwtClaims{
-		UserName: r.UserName,
-		ExpDate:  time.Now().Add(time.Duration(time.Duration(access_exp_time) * time.Minute)),
+		UserName:         r.UserName,
+		RegisteredClaims: jwt.RegisteredClaims{ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Duration(time.Duration(access_exp_time) * time.Minute)))},
 	}
 	token, err := helper.NewToken(&jwtClaim)
 	if err != nil {
@@ -109,8 +110,8 @@ func (s *Repository) Login(ctx context.Context, r *pb.LoginRequest) (*pb.LoginRe
 		access_exp_time, _ := strconv.Atoi(viper.Get("ACCESS_EXP_TIME").(string))
 		// create jwt token
 		jwtClaim := models.JwtClaims{
-			UserName: user.UserName,
-			ExpDate:  time.Now().Add(time.Duration(time.Duration(access_exp_time) * time.Minute)),
+			UserName:         user.UserName,
+			RegisteredClaims: jwt.RegisteredClaims{ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Duration(time.Duration(access_exp_time) * time.Minute)))},
 		}
 		token, err := helper.NewToken(&jwtClaim)
 		if err != nil {
@@ -148,12 +149,12 @@ func (s *Repository) Login(ctx context.Context, r *pb.LoginRequest) (*pb.LoginRe
 	access_exp_time, _ := strconv.Atoi(viper.Get("ACCESS_EXP_TIME").(string))
 	refresh_exp_time, _ := strconv.Atoi(viper.Get("REFRESH_EXP_TIME").(string))
 	access_claims := &models.JwtClaims{
-		UserName: user.UserName,
-		ExpDate:  time.Now().Add(time.Duration(time.Duration(access_exp_time) * time.Minute)),
+		UserName:         user.UserName,
+		RegisteredClaims: jwt.RegisteredClaims{ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Duration(time.Duration(access_exp_time) * time.Minute)))},
 	}
 	refresh_claims := &models.JwtClaims{
-		UserName: user.UserName,
-		ExpDate:  time.Now().Add(time.Duration(time.Duration(refresh_exp_time) * time.Hour * 24)),
+		UserName:         user.UserName,
+		RegisteredClaims: jwt.RegisteredClaims{ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Duration(time.Duration(refresh_exp_time) * time.Hour * 24)))},
 	}
 
 	refresh, err := helper.NewToken(refresh_claims)
@@ -176,4 +177,30 @@ func (s *Repository) Login(ctx context.Context, r *pb.LoginRequest) (*pb.LoginRe
 	}
 
 	return loginResp, nil
+}
+
+func (s *Repository) Refresh(ctx context.Context, r *pb.RefreshRequest) (*pb.RefreshResponse, error) {
+	claims, err := helper.DecodeToken(r.RefreshToken)
+	if err != nil {
+		refresResp := pb.RefreshResponse{
+			Message: err.Error(),
+		}
+		return &refresResp, nil
+	}
+	access_exp_time, _ := strconv.Atoi(viper.Get("ACCESS_EXP_TIME").(string))
+	access_claims := &models.JwtClaims{
+		UserName:         claims.UserName,
+		RegisteredClaims: jwt.RegisteredClaims{ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Duration(time.Duration(access_exp_time) * time.Minute)))},
+	}
+	access_token, err := helper.NewToken(access_claims)
+	if err != nil {
+		respErr := errors.New("internal server error while generating jwt access token  - authentication service")
+		log.Println(err)
+		return nil, respErr
+	}
+	resp := pb.RefreshResponse{
+		Message:     "success",
+		AccessToken: access_token,
+	}
+	return &resp, nil
 }

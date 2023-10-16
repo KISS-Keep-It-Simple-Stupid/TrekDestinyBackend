@@ -17,6 +17,7 @@ func main() {
 	// setup config variables
 	viper.SetConfigFile(".env")
 	viper.ReadInConfig()
+
 	// setup database
 	dbConn, err := driver.NewDBConnection()
 	if err != nil {

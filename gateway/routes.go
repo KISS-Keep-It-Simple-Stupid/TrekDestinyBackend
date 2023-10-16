@@ -11,5 +11,6 @@ func getRoutes(handler *handlers.Repository) http.Handler {
 	mux := chi.NewRouter()
 	mux.Post("/signup", handler.SignUp)
 	mux.Post("/login", handler.Login)
+	mux.Post("/refresh", handler.Refresh)
 	return mux
 }
