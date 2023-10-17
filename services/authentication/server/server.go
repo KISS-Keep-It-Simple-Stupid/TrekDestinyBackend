@@ -204,3 +204,68 @@ func (s *Repository) Refresh(ctx context.Context, r *pb.RefreshRequest) (*pb.Ref
 	}
 	return &resp, nil
 }
+
+func (s *Repository) ForgetPassword(ctx context.Context, r *pb.ForgetPasswordRequest) (*pb.ForgetPasswordResponse, error) {
+	// this method can also be used in this concept
+	user, check, err := s.DB.GetLoginCridentials(r.Email)
+
+	// check user existance
+	if err != nil {
+		respErr := errors.New("internal server error while checking user existance - authentication service")
+		log.Println(err)
+		return nil, respErr
+	}
+	if !check {
+		resp := pb.ForgetPasswordResponse{
+			Message: "There is no registered user corresponding to the given email",
+		}
+		return &resp, nil
+	}
+
+	var (
+		from             = viper.Get("EMAILHOST").(string)
+		password         = viper.Get("EMAILPASSWORD").(string)
+		frontend_address = viper.Get("FRONTEND_ADDRESS").(string)
+	)
+
+	access_exp_time, _ := strconv.Atoi(viper.Get("ACCESS_EXP_TIME").(string))
+	// create jwt token
+	jwtClaim := models.JwtClaims{
+		UserName:         user.UserName,
+		RegisteredClaims: jwt.RegisteredClaims{ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Duration(time.Duration(access_exp_time) * time.Minute)))},
+	}
+	token, err := helper.NewToken(&jwtClaim)
+	if err != nil {
+		respErr := errors.New("internal server error while generating jwt token for verification - authentication service")
+		log.Println(err)
+		return nil, respErr
+	}
+	// checking verification
+	if !user.IsVerified {
+		// sending verification email
+		verificationEmail := email.Email{
+			From:     from,
+			Password: password,
+			To:       []string{user.Email},
+			Text:     "Hello " + user.FirstName + "\ncheck link below to verify your email\n" + frontend_address + "/verify-email?token=" + token,
+		}
+
+		go verificationEmail.Send()
+		resp := pb.ForgetPasswordResponse{
+			Message: "User is not verified",
+		}
+		return &resp, nil
+	}
+	verificationEmail := email.Email{
+		From:     from,
+		Password: password,
+		To:       []string{user.Email},
+		Text:     "Hello " + user.FirstName + "\ncheck link below to change your password\n" + frontend_address + "/reset-password?token=" + token,
+	}
+
+	go verificationEmail.Send()
+	resp := pb.ForgetPasswordResponse{
+		Message: "Check your email to change your password",
+	}
+	return &resp, nil
+}

@@ -41,8 +41,17 @@ message refreshResponse {
     string AccessToken = 2;
 }
 
+message forgetPasswordRequest {
+    string Email = 1;
+}
+
+message forgetPasswordResponse{
+    string Message = 1; 
+}
+
 service Auth {
     rpc Signup(SignUpRequest) returns (SignUpResponse);
     rpc Login(loginRequest) returns (loginResponse);
     rpc Refresh(refreshRequest) returns(refreshResponse);
+    rpc ForgetPassword(forgetPasswordRequest) returns (forgetPasswordResponse);
 }

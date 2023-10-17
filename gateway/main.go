@@ -29,7 +29,7 @@ func main() {
 		Handler: routes,
 	}
 
-	fmt.Println("gateway is up on port :" , port)
+	fmt.Println("gateway is up on port :", port)
 	err = server.ListenAndServe()
 	if err != nil {
 		log.Fatalln(err.Error())
