@@ -116,3 +116,28 @@ func (s *Repository) ForgetPassword(w http.ResponseWriter, r *http.Request) {
 		helpers.MessageGenerator(w, resp.Message, http.StatusBadRequest)
 	}
 }
+func (s *Repository) ResetPassword(w http.ResponseWriter, r *http.Request) {
+	resetPasswordReq := &auth_pb.ResetPasswordRequest{}
+	access_token := r.URL.Query().Get("token")
+	postData, err := io.ReadAll(r.Body)
+	if err != nil {
+		helpers.MessageGenerator(w, "wrong post body format", http.StatusBadRequest)
+		return
+	}
+	err = json.Unmarshal(postData, resetPasswordReq)
+	if err != nil {
+		helpers.MessageGenerator(w, "wrong post body fields", http.StatusBadRequest)
+		return
+	}
+	resetPasswordReq.AccessToken = access_token
+	resp, err := s.auth_client.ResetPassword(context.Background(), resetPasswordReq)
+	if err != nil {
+		helpers.MessageGenerator(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	if resp.Message == "success" {
+		helpers.ResponseGenerator(w, resp)
+	} else {
+		helpers.MessageGenerator(w, resp.Message, http.StatusBadRequest)
+	}
+}

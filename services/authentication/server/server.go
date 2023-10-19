@@ -74,7 +74,6 @@ func (s *Repository) Signup(ctx context.Context, r *pb.SignUpRequest) (*pb.SignU
 		To:       []string{r.Email},
 		Text:     "Hello " + r.FirstName + "\ncheck link below to verify your email\n" + frontend_address + "/verify-email?token=" + token,
 	}
-
 	go verificationEmail.Send()
 
 	resp := pb.SignUpResponse{
@@ -268,4 +267,25 @@ func (s *Repository) ForgetPassword(ctx context.Context, r *pb.ForgetPasswordReq
 		Message: "Check your email to change your password",
 	}
 	return &resp, nil
+}
+
+func (s *Repository) ResetPassword(ctx context.Context, r *pb.ResetPasswordRequest) (*pb.ResetPasswordResponse, error) {
+	claims, err := helper.DecodeToken(r.AccessToken)
+	if err != nil {
+		refresResp := pb.ResetPasswordResponse{
+			Message: err.Error(),
+		}
+		return &refresResp, nil
+	}
+	err = s.DB.UpdateUserPassword(r.NewPassword, claims.UserName)
+	if err != nil {
+		respErr := errors.New("internal server error while updating password - authentication service")
+		log.Println(err)
+		return nil, respErr
+	}
+	resp := &pb.ResetPasswordResponse{
+		Message: "Password updated successfully",
+	}
+	return resp, nil
+
 }

@@ -9,4 +9,5 @@ type Repository interface {
 	InsertUser(user *pb.SignUpRequest) error
 	CheckUserExistance(userEmail, userUserName string) (bool, error)
 	GetLoginCridentials(userEmail string) (*models.LoginCridentials, bool, error)
+	UpdateUserPassword(password, username string) error
 }

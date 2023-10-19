@@ -49,9 +49,19 @@ message forgetPasswordResponse{
     string Message = 1; 
 }
 
+message resetPasswordRequest{
+    string AccessToken =1 ;
+    string NewPassword = 2 ;
+}
+
+message resetPasswordResponse{
+    string message = 1;
+}
+
 service Auth {
     rpc Signup(SignUpRequest) returns (SignUpResponse);
     rpc Login(loginRequest) returns (loginResponse);
     rpc Refresh(refreshRequest) returns(refreshResponse);
     rpc ForgetPassword(forgetPasswordRequest) returns (forgetPasswordResponse);
+    rpc ResetPassword(resetPasswordRequest) returns (resetPasswordResponse);
 }

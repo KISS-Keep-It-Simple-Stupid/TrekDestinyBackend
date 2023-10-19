@@ -68,3 +68,15 @@ func (s *PostgresRepository) GetLoginCridentials(userEmail string) (*models.Logi
 	}
 	return user, true, nil
 }
+
+func (s *PostgresRepository) UpdateUserPassword(password, username string) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
+	defer cancel()
+	query := `update members set password=$1 where username=$2`
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.MinCost)
+	if err != nil {
+		return err
+	}
+	_, err = s.DB.ExecContext(ctx, query, string(hashedPassword), username)
+	return err
+}
