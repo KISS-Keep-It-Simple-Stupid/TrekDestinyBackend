@@ -10,4 +10,5 @@ type Repository interface {
 	CheckUserExistance(userEmail, userUserName string) (bool, error)
 	GetLoginCridentials(userEmail string) (*models.LoginCridentials, bool, error)
 	UpdateUserPassword(password, username string) error
+	VerifyUser(username string) error
 }

@@ -27,6 +27,7 @@ type AuthClient interface {
 	Refresh(ctx context.Context, in *RefreshRequest, opts ...grpc.CallOption) (*RefreshResponse, error)
 	ForgetPassword(ctx context.Context, in *ForgetPasswordRequest, opts ...grpc.CallOption) (*ForgetPasswordResponse, error)
 	ResetPassword(ctx context.Context, in *ResetPasswordRequest, opts ...grpc.CallOption) (*ResetPasswordResponse, error)
+	EmailVerification(ctx context.Context, in *VerifyRequest, opts ...grpc.CallOption) (*VerifyResponse, error)
 }
 
 type authClient struct {
@@ -82,6 +83,15 @@ func (c *authClient) ResetPassword(ctx context.Context, in *ResetPasswordRequest
 	return out, nil
 }
 
+func (c *authClient) EmailVerification(ctx context.Context, in *VerifyRequest, opts ...grpc.CallOption) (*VerifyResponse, error) {
+	out := new(VerifyResponse)
+	err := c.cc.Invoke(ctx, "/Auth/EmailVerification", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // AuthServer is the server API for Auth service.
 // All implementations must embed UnimplementedAuthServer
 // for forward compatibility
@@ -91,6 +101,7 @@ type AuthServer interface {
 	Refresh(context.Context, *RefreshRequest) (*RefreshResponse, error)
 	ForgetPassword(context.Context, *ForgetPasswordRequest) (*ForgetPasswordResponse, error)
 	ResetPassword(context.Context, *ResetPasswordRequest) (*ResetPasswordResponse, error)
+	EmailVerification(context.Context, *VerifyRequest) (*VerifyResponse, error)
 	mustEmbedUnimplementedAuthServer()
 }
 
@@ -112,6 +123,9 @@ func (UnimplementedAuthServer) ForgetPassword(context.Context, *ForgetPasswordRe
 }
 func (UnimplementedAuthServer) ResetPassword(context.Context, *ResetPasswordRequest) (*ResetPasswordResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ResetPassword not implemented")
+}
+func (UnimplementedAuthServer) EmailVerification(context.Context, *VerifyRequest) (*VerifyResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method EmailVerification not implemented")
 }
 func (UnimplementedAuthServer) mustEmbedUnimplementedAuthServer() {}
 
@@ -216,6 +230,24 @@ func _Auth_ResetPassword_Handler(srv interface{}, ctx context.Context, dec func(
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Auth_EmailVerification_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(VerifyRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthServer).EmailVerification(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/Auth/EmailVerification",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthServer).EmailVerification(ctx, req.(*VerifyRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Auth_ServiceDesc is the grpc.ServiceDesc for Auth service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -242,6 +274,10 @@ var Auth_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ResetPassword",
 			Handler:    _Auth_ResetPassword_Handler,
+		},
+		{
+			MethodName: "EmailVerification",
+			Handler:    _Auth_EmailVerification_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

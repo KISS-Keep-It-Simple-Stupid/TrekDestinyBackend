@@ -58,10 +58,19 @@ message resetPasswordResponse{
     string message = 1;
 }
 
+message verifyRequest{
+    string Token = 1;
+}
+
+message verifyResponse{
+    string Message = 1;
+}
+
 service Auth {
     rpc Signup(SignUpRequest) returns (SignUpResponse);
     rpc Login(loginRequest) returns (loginResponse);
     rpc Refresh(refreshRequest) returns(refreshResponse);
     rpc ForgetPassword(forgetPasswordRequest) returns (forgetPasswordResponse);
     rpc ResetPassword(resetPasswordRequest) returns (resetPasswordResponse);
+    rpc EmailVerification(verifyRequest) returns (verifyResponse);
 }

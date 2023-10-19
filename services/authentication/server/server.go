@@ -289,3 +289,23 @@ func (s *Repository) ResetPassword(ctx context.Context, r *pb.ResetPasswordReque
 	return resp, nil
 
 }
+
+func (s *Repository) EmailVerification(ctx context.Context, r *pb.VerifyRequest) (*pb.VerifyResponse, error) {
+	claims, err := helper.DecodeToken(r.Token)
+	if err != nil {
+		verifyResp := pb.VerifyResponse{
+			Message: err.Error(),
+		}
+		return &verifyResp, nil
+	}
+	err = s.DB.VerifyUser(claims.UserName)
+	if err != nil {
+		respErr := errors.New("internal server error while updating user verification - authentication service")
+		log.Println(err)
+		return nil, respErr
+	}
+	resp := &pb.VerifyResponse{
+		Message: "user verified successfully",
+	}
+	return resp, nil
+}

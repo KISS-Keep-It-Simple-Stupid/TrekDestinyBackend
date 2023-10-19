@@ -141,3 +141,18 @@ func (s *Repository) ResetPassword(w http.ResponseWriter, r *http.Request) {
 		helpers.MessageGenerator(w, resp.Message, http.StatusBadRequest)
 	}
 }
+func (s *Repository) EmailVerification(w http.ResponseWriter, r *http.Request) {
+	verifyReq := &auth_pb.VerifyRequest{}
+	access_token := r.URL.Query().Get("token")
+	verifyReq.Token = access_token
+	resp, err := s.auth_client.EmailVerification(context.Background(), verifyReq)
+	if err != nil {
+		helpers.MessageGenerator(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	if resp.Message == "user verified successfully" {
+		helpers.MessageGenerator(w, resp.Message, http.StatusOK)
+	} else {
+		helpers.MessageGenerator(w, resp.Message, http.StatusBadRequest)
+	}
+}

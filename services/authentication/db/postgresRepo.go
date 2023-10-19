@@ -80,3 +80,11 @@ func (s *PostgresRepository) UpdateUserPassword(password, username string) error
 	_, err = s.DB.ExecContext(ctx, query, string(hashedPassword), username)
 	return err
 }
+
+func (s *PostgresRepository) VerifyUser(username string) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
+	defer cancel()
+	query := `update members set isverified=true where username=$1`
+	_, err := s.DB.ExecContext(ctx, query, username)
+	return err
+}
