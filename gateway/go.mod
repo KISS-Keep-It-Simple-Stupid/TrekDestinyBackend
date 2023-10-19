@@ -4,6 +4,7 @@ go 1.20
 
 require (
 	github.com/go-chi/chi/v5 v5.0.10
+	github.com/go-chi/cors v1.2.1
 	github.com/golang/protobuf v1.5.3
 	github.com/spf13/viper v1.17.0
 	google.golang.org/grpc v1.58.3
