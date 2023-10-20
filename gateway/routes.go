@@ -25,5 +25,6 @@ func getRoutes(handler *handlers.Repository) http.Handler {
 	mux.Post("/reset-password", handler.ResetPassword)
 	mux.Get("/verify-email", handler.EmailVerification)
 	mux.Get("/profile", handler.Profile)
+	mux.Post("/edit-profile" , handler.EditProfile)
 	return mux
 }

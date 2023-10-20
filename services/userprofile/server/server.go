@@ -8,6 +8,7 @@ import (
 	"github.com/KISS-Keep-It-Simple-Stupid/TrekDestinyBackend/services/userprofile/db"
 	"github.com/KISS-Keep-It-Simple-Stupid/TrekDestinyBackend/services/userprofile/helper"
 	"github.com/KISS-Keep-It-Simple-Stupid/TrekDestinyBackend/services/userprofile/pb"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type Repository struct {
@@ -36,5 +37,40 @@ func (s *Repository) ProfileDetails(ctx context.Context, r *pb.ProfileDetailsReq
 		return nil, err
 	}
 	resp.Message = "success"
+	return resp, nil
+}
+
+func (s *Repository) EditProfile(ctx context.Context, r *pb.EditProfileRequest) (*pb.EditProfileResponse, error) {
+	claims, err := helper.DecodeToken(r.AccessToken)
+	if err != nil {
+		resp := &pb.EditProfileResponse{
+			Message: "User is UnAuthorized",
+		}
+		return resp, nil
+	}
+	if r.CurrentPassword != "" {
+		current_password, err := s.DB.GetUserPassword(claims.UserName)
+		if err != nil {
+			log.Println(err.Error())
+			err := errors.New("internal error while getting user password from database - userprofile service")
+			return nil, err
+		}
+		err = bcrypt.CompareHashAndPassword([]byte(current_password), []byte(r.CurrentPassword))
+		if err != nil {
+			resp := &pb.EditProfileResponse{
+				Message: "Wrong current password",
+			}
+			return resp, nil
+		}
+	}
+	err = s.DB.UpdateUserInformation(claims.UserName, r)
+	if err != nil {
+		log.Println(err.Error())
+		err := errors.New("internal error while updating user info - userprofile service")
+		return nil, err
+	}
+	resp := &pb.EditProfileResponse{
+		Message: "success",
+	}
 	return resp, nil
 }

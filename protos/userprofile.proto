@@ -21,7 +21,22 @@ message profileDetailsRequest{
     string AccessToken =1;
 }
 
+message editProfileRequest{
+    string CurrentPassword = 1;
+    string FirstName = 2;
+    string LastName= 3;
+    string City = 4;
+    string Country = 5;
+    string Bio = 6;
+    string NewPassword=7;
+    string AccessToken=8;
+}
+
+message editProfileResponse{
+    string Message = 1;
+}
 
 service UserProfile {
     rpc ProfileDetails(profileDetailsRequest) returns (profileDetailsResponse);
+    rpc EditProfile(editProfileRequest) returns (editProfileResponse);
 }

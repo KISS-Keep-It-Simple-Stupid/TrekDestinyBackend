@@ -7,6 +7,7 @@ require (
 	github.com/golang/protobuf v1.5.3
 	github.com/lib/pq v1.10.9
 	github.com/spf13/viper v1.17.0
+	golang.org/x/crypto v0.13.0
 	google.golang.org/grpc v1.59.0
 )
 
