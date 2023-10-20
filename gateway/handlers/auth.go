@@ -3,10 +3,11 @@ package handlers
 import (
 	"context"
 	"encoding/json"
-	"github.com/KISS-Keep-It-Simple-Stupid/TrekDestinyBackend/gateway/helpers"
-	auth_pb "github.com/KISS-Keep-It-Simple-Stupid/TrekDestinyBackend/gateway/services/authentication"
 	"io"
 	"net/http"
+
+	"github.com/KISS-Keep-It-Simple-Stupid/TrekDestinyBackend/gateway/helpers"
+	auth_pb "github.com/KISS-Keep-It-Simple-Stupid/TrekDestinyBackend/gateway/services/authentication"
 )
 
 func (s *Repository) SignUp(w http.ResponseWriter, r *http.Request) {
@@ -99,7 +100,7 @@ func (s *Repository) ForgetPassword(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if resp.Message == "success" {
-		helpers.ResponseGenerator(w, resp)
+		helpers.MessageGenerator(w, "Check your email to change your password", http.StatusOK)
 	} else {
 		helpers.MessageGenerator(w, resp.Message, http.StatusBadRequest)
 	}

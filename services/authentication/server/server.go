@@ -264,7 +264,7 @@ func (s *Repository) ForgetPassword(ctx context.Context, r *pb.ForgetPasswordReq
 
 	go verificationEmail.Send()
 	resp := pb.ForgetPasswordResponse{
-		Message: "Check your email to change your password",
+		Message: "success",
 	}
 	return &resp, nil
 }
