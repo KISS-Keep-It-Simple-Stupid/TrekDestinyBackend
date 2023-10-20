@@ -135,7 +135,7 @@ func (s *Repository) ResetPassword(w http.ResponseWriter, r *http.Request) {
 		helpers.MessageGenerator(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	if resp.Message == "success" {
+	if resp.Message == "Password updated successfully" {
 		helpers.ResponseGenerator(w, resp)
 	} else {
 		helpers.MessageGenerator(w, resp.Message, http.StatusBadRequest)
