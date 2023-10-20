@@ -1,0 +1,27 @@
+syntax = "proto3";
+
+option go_package = "/pb";
+
+
+
+message profileDetailsResponse {
+    string Email =1;
+    string UserName =2;
+    string FirstName =3;
+    string LastName =4;
+    string BirthDate =5;
+    string City = 6;
+    string Country = 7;
+    int32 Gender = 8;
+    string Bio = 9;
+    string Message = 10;
+}
+
+message profileDetailsRequest{
+    string AccessToken =1;
+}
+
+
+service UserProfile {
+    rpc ProfileDetails(profileDetailsRequest) returns (profileDetailsResponse);
+}
