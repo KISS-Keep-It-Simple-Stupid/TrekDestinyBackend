@@ -12,6 +12,10 @@ import (
 func (s *Repository) Profile(w http.ResponseWriter, r *http.Request) {
 	reqToken := r.Header.Get("Authorization")
 	splitToken := strings.Split(reqToken, "Jwt ")
+	if len(splitToken) < 2 {
+		helpers.MessageGenerator(w, "User is UnAuthorized", http.StatusUnauthorized)
+		return
+	}
 	reqToken = splitToken[1]
 	profileReq := &userprofile_pb.ProfileDetailsRequest{AccessToken: reqToken}
 	resp, err := s.userprofile_client.ProfileDetails(context.Background(), profileReq)
