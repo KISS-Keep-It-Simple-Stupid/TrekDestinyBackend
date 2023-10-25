@@ -45,9 +45,14 @@ func (s *PostgresRepository) GetUserDetails(username string) (*pb.ProfileDetails
 func (s *PostgresRepository) UpdateUserInformation(username string, userInfo *pb.EditProfileRequest) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
 	defer cancel()
-	hashed_password, err := bcrypt.GenerateFromPassword([]byte(userInfo.NewPassword), bcrypt.MinCost)
-	if err != nil {
-		return err
+
+	password := ""
+	if userInfo.CurrentPassword != "" {
+		hashed_password, err := bcrypt.GenerateFromPassword([]byte(userInfo.NewPassword), bcrypt.MinCost)
+		if err != nil {
+			return err
+		}
+		password = string(hashed_password)
 	}
 	query := `update members set  
 	password = COALESCE(NULLIF($1, ''), password) ,
@@ -57,8 +62,8 @@ func (s *PostgresRepository) UpdateUserInformation(username string, userInfo *pb
 	country = COALESCE(NULLIF($5, ''), country),
 	bio = COALESCE(NULLIF($6, ''), bio)
 	where username=$7`
-	_, err = s.DB.ExecContext(ctx, query,
-		string(hashed_password),
+	_, err := s.DB.ExecContext(ctx, query,
+		password,
 		userInfo.FirstName,
 		userInfo.LastName,
 		userInfo.City,
