@@ -17,7 +17,7 @@ func main() {
 	var (
 		auth_service_address         = viper.Get("AUTH_SERVICE_ADDRESS").(string)
 		userprofile_service_address  = viper.Get("USERPROFILE_SERVICE_ADDRESS").(string)
-		announcement_service_address = viper.Get("USERPROFILE_SERVICE_ADDRESS").(string)
+		announcement_service_address = viper.Get("ANNOUNCEMENT_SERVICE_ADDRESS").(string)
 		port                         = viper.Get("SERVERPORT").(string)
 	)
 	auth_conn, err := grpc.Dial(auth_service_address, grpc.WithTransportCredentials(insecure.NewCredentials()))

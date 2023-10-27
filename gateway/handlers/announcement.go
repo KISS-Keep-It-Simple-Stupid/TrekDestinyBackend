@@ -38,6 +38,8 @@ func (s *Repository) CreateCard(w http.ResponseWriter, r *http.Request) {
 	}
 	if resp.Message == "success" {
 		helpers.MessageGenerator(w, "announcement created successfully", http.StatusCreated)
+	} else if resp.Message == "User is UnAuthorized - announcement service" {
+		helpers.MessageGenerator(w, resp.Message, http.StatusUnauthorized)
 	} else {
 		helpers.MessageGenerator(w, resp.Message, http.StatusBadRequest)
 	}
