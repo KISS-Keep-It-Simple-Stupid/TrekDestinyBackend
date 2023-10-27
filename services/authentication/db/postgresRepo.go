@@ -23,8 +23,8 @@ func NewPostgresRepository(db *sql.DB) Repository {
 func (s *PostgresRepository) InsertUser(user *pb.SignUpRequest) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
 	defer cancel()
-	query := `insert into members (email , username , password , firstname , lastname , birthdate , city , country ,gender)
-			  values ($1,$2,$3,$4,$5,$6,$7,$8,$9)`
+	query := `insert into members (email , username , password , firstname , lastname , birthdate , state , country ,gender , joiningdate)
+			  values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)`
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.MinCost)
 	if err != nil {
 		return err
@@ -33,8 +33,12 @@ func (s *PostgresRepository) InsertUser(user *pb.SignUpRequest) error {
 	if err != nil {
 		return err
 	}
+	joiningDate, err := time.Parse("2006-01-02", time.Now().Format("2006-01-02"))
+	if err != nil {
+		return err
+	}
 	_, err = s.DB.ExecContext(ctx, query, user.Email, user.UserName, string(hashedPassword),
-		user.FirstName, user.LastName, birthdate, user.City, user.Country, user.Gender)
+		user.FirstName, user.LastName, birthdate, user.State, user.Country, user.Gender, joiningDate)
 	return err
 }
 
