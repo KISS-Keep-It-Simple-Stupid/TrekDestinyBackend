@@ -1,0 +1,23 @@
+syntax = "proto3";
+
+option go_package = "/pb";
+
+message createCardResponse {
+    string Message = 1; 
+
+}
+
+message createCardRequest {
+    string AccessToken = 1 ;
+    string Description = 2 ;
+    repeated string PreferredLanguages = 3 ;
+    string StartDate = 4;
+    string EndDate = 5 ;
+    string DestinationCity = 6 ;
+    string DestinationCountry = 7 ;
+    int32 NumberOfTravelers = 8 ; 
+}
+
+service Announcement {
+    rpc CreateCard(createCardRequest) returns (createCardResponse);
+}

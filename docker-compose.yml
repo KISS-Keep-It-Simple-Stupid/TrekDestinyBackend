@@ -39,6 +39,18 @@ services:
       - type: bind
         source: ./services/userprofile
         target: /app
+  announcement:
+    build: ./services/announcement/
+    container_name: announcement
+    restart: on-failure
+    depends_on:
+      - db
+    networks:
+      - trekdestiny
+    volumes:
+      - type: bind
+        source: ./services/announcement
+        target: /app
   db:
     image: postgres:16.0-alpine
     container_name: db
