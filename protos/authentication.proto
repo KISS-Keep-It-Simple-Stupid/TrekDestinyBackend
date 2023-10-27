@@ -22,7 +22,7 @@ message SignUpRequest {
     string FirstName =4;
     string LastName =5;
     string BirthDate =6;
-    string City = 7;
+    string State = 7;
     string Country = 8;
     int32 Gender = 9; 
     bool IsVerified= 10;
