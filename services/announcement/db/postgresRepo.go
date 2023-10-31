@@ -33,7 +33,7 @@ func (s *PostgresRepository) GetIdFromUsername(username string) (int, error) {
 func (s *PostgresRepository) InsertAnnouncement(announcementInfo *pb.CreateCardRequest, user_id int) (int, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
 	defer cancel()
-	query := `insert into announcement (user_id, description, startdate, enddate, city, country, numberoftravelers) values ($1, $2, $3, $4, $5, $6, $7)`
+	query := `insert into announcement (user_id, description, startdate, enddate, city, state, country, numberoftravelers) values ($1, $2, $3, $4, $5, $6, $7, $8)`
 	startdate, err := time.Parse("2006-01-02", announcementInfo.StartDate)
 	if err != nil {
 		return -1, err
@@ -42,7 +42,7 @@ func (s *PostgresRepository) InsertAnnouncement(announcementInfo *pb.CreateCardR
 	if err != nil {
 		return -1, err
 	}
-	_, err = s.DB.ExecContext(ctx, query, user_id, announcementInfo.Description, startdate, enddate, announcementInfo.DestinationCity, announcementInfo.DestinationCountry, int(announcementInfo.NumberOfTravelers))
+	_, err = s.DB.ExecContext(ctx, query, user_id, announcementInfo.Description, startdate, enddate, announcementInfo.DestinationCity, announcementInfo.DestinationState, announcementInfo.DestinationCountry, int(announcementInfo.NumberOfTravelers))
 	if err != nil {
 		return -1, err
 	}
@@ -89,7 +89,7 @@ func (s *PostgresRepository) GetAnnouncementDetails() (*pb.GetCardResponse, erro
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
 	defer cancel()
 	resp := pb.GetCardResponse{}
-	query := "select id, user_id, description, startdate, enddate, city, country, numberoftravelers from announcement"
+	query := "select id, user_id, description, startdate, enddate, city, state, country, numberoftravelers from announcement"
 	rows, err := s.DB.QueryContext(ctx, query)
 	if err != nil {
 		return nil, err
@@ -105,6 +105,7 @@ func (s *PostgresRepository) GetAnnouncementDetails() (*pb.GetCardResponse, erro
 			&startdate,
 			&enddate,
 			&card.DestinationCity,
+			&card.DestinationState,
 			&card.DestinationCountry,
 			&card.NumberOfTravelers)
 		if err != nil {
