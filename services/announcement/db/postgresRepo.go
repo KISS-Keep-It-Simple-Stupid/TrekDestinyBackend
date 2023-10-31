@@ -84,3 +84,55 @@ func (s *PostgresRepository) CheckAnnouncementTimeValidation(startDate string, e
 	}
 	return false, nil
 }
+
+func (s *PostgresRepository) GetAnnouncementDetails() (*pb.GetCardResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
+	defer cancel()
+	resp := pb.GetCardResponse{}
+	query := "select id, user_id, description, startdate, enddate, city, country, numberoftravelers from announcement"
+	rows, err := s.DB.QueryContext(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+	for rows.Next() {
+		card := pb.CardRecord{}
+		var startdate time.Time
+		var enddate time.Time
+		err := rows.Scan(
+			&card.CardId, 
+			&card.UserId, 
+			&card.Description, 
+			&startdate,
+			&enddate,
+			&card.DestinationCity,
+			&card.DestinationCountry,
+			&card.NumberOfTravelers)
+		if err != nil {
+			return nil, err
+		}
+		card.StartDate = startdate.Format("2006-01-02")
+		card.EndDate = enddate.Format("2006-01-02")
+		resp.Cards = append(resp.Cards, &card)
+	}
+	return &resp, nil
+}
+
+func (s *PostgresRepository) GetLanguagesOfAnnouncement(announcement_id int) ([]string, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
+	defer cancel()
+	var languages []string
+	query := "select language from announcement_language where announcement_id = $1"
+	rows, err := s.DB.QueryContext(ctx, query, announcement_id)
+	if err != nil {
+		return nil, err
+	}
+	for rows.Next() {
+		var lang string
+		err := rows.Scan(&lang)
+		if err != nil {
+			return nil, err
+		}
+		languages = append(languages, lang)
+	}
+	return languages, nil
+}

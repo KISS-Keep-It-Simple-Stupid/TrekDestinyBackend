@@ -69,3 +69,30 @@ func (s *Repository) CreateCard(ctx context.Context, r *pb.CreateCardRequest) (*
 	}
 	return &resp, nil
 }
+
+func (s *Repository) GetCard(ctx context.Context, r *pb.GetCardRequest) (*pb.GetCardResponse, error) {
+	_, err := helper.DecodeToken(r.AccessToken)
+	if err != nil {
+		resp := &pb.GetCardResponse{
+			Message: "User is UnAuthorized - announcement service",
+		}
+		return resp, nil
+	}
+	resp, err := s.DB.GetAnnouncementDetails()
+	if err != nil {
+		log.Println(err.Error())
+		err := errors.New("internal error while getting announcement info - announcement service")
+		return nil, err
+	}
+	for _, card := range resp.Cards {
+		languages, err := s.DB.GetLanguagesOfAnnouncement(int(card.CardId))
+		if err != nil {
+			respErr := errors.New("internal server error while adding new announcement language - announcement service")
+			log.Println(err)
+			return nil, respErr
+		}
+		card.PreferredLanguages = languages[:]
+	}
+	resp.Message = "success"
+	return resp, nil
+}
