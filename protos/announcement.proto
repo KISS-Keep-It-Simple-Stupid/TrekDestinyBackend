@@ -9,8 +9,9 @@ message createCardRequest {
     string StartDate = 4;
     string EndDate = 5;
     string DestinationCity = 6;
-    string DestinationCountry = 7;
-    int32 NumberOfTravelers = 8; 
+    string DestinationState = 7;
+    string DestinationCountry = 8;
+    int32 NumberOfTravelers = 9; 
 }
 
 message createCardResponse {
@@ -30,8 +31,9 @@ message CardRecord {
     string StartDate = 5;
     string EndDate = 6;
     string DestinationCity = 7;
-    string DestinationCountry = 8;
-    int32 NumberOfTravelers = 9;
+    string DestinationState = 8;
+    string DestinationCountry = 9;
+    int32 NumberOfTravelers = 10;
 }
 
 message getCardResponse {
