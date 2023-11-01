@@ -23,8 +23,8 @@ func (s *PostgresRepository) GetUserDetails(username string) (*pb.ProfileDetails
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
 	defer cancel()
 	user := pb.ProfileDetailsResponse{}
-	var birth_date time.Time
-	query := `select email,username,firstname ,lastname , birthdate , city , country , gender , bio from members where username = $1`
+	var birth_date, joiningdate time.Time
+	query := `select email,username,firstname ,lastname , birthdate , city , country , gender , bio , state , joiningdate from members where username = $1`
 	err := s.DB.QueryRowContext(ctx, query, username).Scan(
 		&user.Email,
 		&user.UserName,
@@ -34,11 +34,14 @@ func (s *PostgresRepository) GetUserDetails(username string) (*pb.ProfileDetails
 		&user.City,
 		&user.Country,
 		&user.Gender,
-		&user.Bio)
+		&user.Bio,
+		&user.State,
+		&joiningdate)
 	if err != nil {
 		return nil, err
 	}
 	user.BirthDate = birth_date.Format("2006-01-02")
+	user.JoiningDate = joiningdate.Format("2006-01-02")
 	return &user, nil
 }
 
