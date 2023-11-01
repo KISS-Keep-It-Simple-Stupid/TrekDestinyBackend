@@ -14,7 +14,9 @@ message profileDetailsResponse {
     string Country = 7;
     int32 Gender = 8;
     string Bio = 9;
-    string Message = 10;
+    string State = 10;
+    string JoiningDate = 11;
+    string Message = 12;
 }
 
 message profileDetailsRequest{
