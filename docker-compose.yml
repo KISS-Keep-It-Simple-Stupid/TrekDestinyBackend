@@ -51,6 +51,33 @@ services:
       - type: bind
         source: ./services/announcement
         target: /app
+  notification:
+    build: ./services/notification/
+    container_name: notification
+    restart: on-failure
+    depends_on:
+      - db
+    networks:
+      - trekdestiny
+    volumes:
+      - type: bind
+        source: ./services/notification
+        target: /app
+    ports:
+      - 9091:8083
+  rabbit:
+    image: rabbitmq:3-management-alpine
+    container_name: rabbit
+    volumes:
+      - rabbit-data:/var/lib/rabbitmq
+      - rabbit-logs:/var/log/rabbitmq
+    networks:
+      - trekdestiny
+    env_file:
+      - rabbit.env
+    depends_on:
+      - notification
+    restart: on-failure
   db:
     image: postgres:16.0-alpine
     container_name: db
@@ -64,5 +91,7 @@ services:
 
 volumes:
   trekdestinyData:
+  rabbit-data:
+  rabbit-logs:
 networks:
   trekdestiny:
