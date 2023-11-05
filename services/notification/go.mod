@@ -7,8 +7,8 @@ require (
 	github.com/go-chi/cors v1.2.1
 	github.com/gorilla/websocket v1.5.0
 	github.com/lib/pq v1.10.9
+	github.com/rabbitmq/amqp091-go v1.9.0
 	github.com/spf13/viper v1.17.0
-	github.com/streadway/amqp v1.1.0
 )
 
 require (

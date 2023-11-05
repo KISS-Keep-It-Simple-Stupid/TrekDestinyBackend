@@ -45,6 +45,7 @@ services:
     restart: on-failure
     depends_on:
       - db
+      - rabbit
     networks:
       - trekdestiny
     volumes:
@@ -57,6 +58,7 @@ services:
     restart: on-failure
     depends_on:
       - db
+      - announcement
     networks:
       - trekdestiny
     volumes:
@@ -75,8 +77,6 @@ services:
       - trekdestiny
     env_file:
       - rabbit.env
-    depends_on:
-      - notification
     restart: on-failure
   db:
     image: postgres:16.0-alpine

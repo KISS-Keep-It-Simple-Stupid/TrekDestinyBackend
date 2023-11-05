@@ -33,6 +33,8 @@ func main() {
 		log.Fatal(err)
 	}
 	dbRepo := dbrepo.New(db)
+
+	// initilize rabbitMQ
 	rabbit_conn := fmt.Sprintf("amqp://%s:%s@%s:%s", rabbit_password, rabbit_user, rabbit_host, rabbit_port)
 	rabbitQueue := &queue.Queue{
 		ConnString: rabbit_conn,

@@ -8,3 +8,8 @@ type JwtClaims struct {
 	jwt.RegisteredClaims
 	UserName string
 }
+
+type NotificationMessage struct {
+	UserID  int    `json:"user_id"`
+	Message string `json:"message"`
+}

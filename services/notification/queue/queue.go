@@ -6,7 +6,7 @@ import (
 
 	"github.com/KISS-Keep-It-Simple-Stupid/TrekDestinyBackend/services/notification/dbrepo"
 	"github.com/KISS-Keep-It-Simple-Stupid/TrekDestinyBackend/services/notification/models"
-	"github.com/streadway/amqp"
+	amqp "github.com/rabbitmq/amqp091-go"
 )
 
 type Queue struct {
@@ -30,18 +30,6 @@ func (q *Queue) New() error {
 	}
 	q.channel = channel
 	q.connection = conn
-	_, err = channel.QueueDeclare(
-		q.QueueName,
-		false,
-		false,
-		false,
-		false,
-		nil,
-	)
-	if err != nil {
-		return err
-	}
-
 	return nil
 }
 func (q *Queue) Up() {
