@@ -62,8 +62,8 @@ func (s *PostgresRepository) GetLoginCridentials(userEmail string) (*models.Logi
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
 	defer cancel()
 	user := &models.LoginCridentials{}
-	query := `select email , password , username , firstname , isverified from members where email = $1`
-	err := s.DB.QueryRowContext(ctx, query, userEmail).Scan(&user.Email, &user.Password, &user.UserName, &user.FirstName, &user.IsVerified)
+	query := `select id ,email , password , username , firstname , isverified from members where email = $1`
+	err := s.DB.QueryRowContext(ctx, query, userEmail).Scan(&user.ID, &user.Email, &user.Password, &user.UserName, &user.FirstName, &user.IsVerified)
 	if err != nil {
 		if err != sql.ErrNoRows {
 			return nil, false, err

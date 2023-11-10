@@ -7,9 +7,11 @@ import (
 type JwtClaims struct {
 	jwt.RegisteredClaims
 	UserName string
+	UserID   int
 }
 
 type LoginCridentials struct {
+	ID         int
 	Email      string
 	Password   string
 	UserName   string

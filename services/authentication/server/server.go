@@ -110,6 +110,7 @@ func (s *Repository) Login(ctx context.Context, r *pb.LoginRequest) (*pb.LoginRe
 		// create jwt token
 		jwtClaim := models.JwtClaims{
 			UserName:         user.UserName,
+			UserID:           user.ID,
 			RegisteredClaims: jwt.RegisteredClaims{ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Duration(time.Duration(access_exp_time) * time.Minute)))},
 		}
 		token, err := helper.NewToken(&jwtClaim)
@@ -149,10 +150,12 @@ func (s *Repository) Login(ctx context.Context, r *pb.LoginRequest) (*pb.LoginRe
 	refresh_exp_time, _ := strconv.Atoi(viper.Get("REFRESH_EXP_TIME").(string))
 	access_claims := &models.JwtClaims{
 		UserName:         user.UserName,
+		UserID:           user.ID,
 		RegisteredClaims: jwt.RegisteredClaims{ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Duration(time.Duration(access_exp_time) * time.Minute)))},
 	}
 	refresh_claims := &models.JwtClaims{
 		UserName:         user.UserName,
+		UserID:           user.ID,
 		RegisteredClaims: jwt.RegisteredClaims{ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Duration(time.Duration(refresh_exp_time) * time.Hour * 24)))},
 	}
 
@@ -189,6 +192,7 @@ func (s *Repository) Refresh(ctx context.Context, r *pb.RefreshRequest) (*pb.Ref
 	access_exp_time, _ := strconv.Atoi(viper.Get("ACCESS_EXP_TIME").(string))
 	access_claims := &models.JwtClaims{
 		UserName:         claims.UserName,
+		UserID:           claims.UserID,
 		RegisteredClaims: jwt.RegisteredClaims{ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Duration(time.Duration(access_exp_time) * time.Minute)))},
 	}
 	access_token, err := helper.NewToken(access_claims)
@@ -231,6 +235,7 @@ func (s *Repository) ForgetPassword(ctx context.Context, r *pb.ForgetPasswordReq
 	// create jwt token
 	jwtClaim := models.JwtClaims{
 		UserName:         user.UserName,
+		UserID:           user.ID,
 		RegisteredClaims: jwt.RegisteredClaims{ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Duration(time.Duration(access_exp_time) * time.Minute)))},
 	}
 	token, err := helper.NewToken(&jwtClaim)

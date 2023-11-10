@@ -103,3 +103,29 @@ func (s *PostgresRepository) GetUserPassword(username string) (string, error) {
 	}
 	return current_password, nil
 }
+
+func (s *PostgresRepository) GetNotificationByID(userid int) ([]*pb.Notifications, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
+	defer cancel()
+	query := `select  id , message from notifications where user_id = $1`
+	rows, err := s.DB.QueryContext(ctx, query, userid)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return make([]*pb.Notifications, 0), nil
+		}
+		return nil, err
+	}
+
+	notifs := make([]*pb.Notifications, 0)
+
+	for rows.Next() {
+		temp_notif := pb.Notifications{}
+		err := rows.Scan(&temp_notif.NotificationID, &temp_notif.Notification)
+		if err != nil {
+			return nil, err
+		}
+		notifs = append(notifs, &temp_notif)
+	}
+
+	return notifs, err
+}

@@ -31,7 +31,7 @@ func (repo *Repository) Subscribe(w http.ResponseWriter, r *http.Request) {
 	conn, err := repo.upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		w.Header().Set("content/type", "application/json")
+		w.Header().Set("Content-Type", "application/json")
 		errorMessage := struct {
 			Message string `json:"message"`
 		}{

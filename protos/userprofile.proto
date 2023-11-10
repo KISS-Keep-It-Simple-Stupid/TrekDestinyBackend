@@ -38,7 +38,23 @@ message editProfileResponse{
     string Message = 1;
 }
 
+
+message userNotificationRequest{
+    string AccessToken = 1;
+}
+
+message Notifications{
+    string Notification =1 ;
+    int32 NotificationID = 2;
+}
+
+message userNotificationResponse{
+    repeated Notifications Notifs= 1;
+    string Message = 2;
+}
+
 service UserProfile {
     rpc ProfileDetails(profileDetailsRequest) returns (profileDetailsResponse);
     rpc EditProfile(editProfileRequest) returns (editProfileResponse);
+    rpc UserNotifications(userNotificationRequest) returns(userNotificationResponse);
 }
