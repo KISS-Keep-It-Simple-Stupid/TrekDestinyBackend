@@ -3,6 +3,7 @@ package db
 import (
 	"context"
 	"database/sql"
+	"strings"
 	"time"
 
 	"github.com/KISS-Keep-It-Simple-Stupid/TrekDestinyBackend/services/announcement/pb"
@@ -85,12 +86,35 @@ func (s *PostgresRepository) CheckAnnouncementTimeValidation(startDate string, e
 	return false, nil
 }
 
-func (s *PostgresRepository) GetAnnouncementDetails() (*pb.GetCardResponse, error) {
+func (s *PostgresRepository) GetAnnouncementDetails(filter []string, sort string, pagesize, pagenumber int) (*pb.GetCardResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
 	defer cancel()
 	resp := pb.GetCardResponse{}
 	query := "select id, user_id, description, startdate, enddate, city, state, country, numberoftravelers from announcement"
-	rows, err := s.DB.QueryContext(ctx, query)
+	if !(len(filter) == 1 && filter[0] == "") {
+		for i, singlefilter := range(filter) {
+			parts := strings.Split(singlefilter, ":")
+			field, value := parts[0], parts[1]
+			if i != 0 {
+				query += " and "
+			} else {
+				query += " where "
+			}
+			query += field + " = '" + value + "'"
+		}
+	}
+	if sort != "" {
+		parts := strings.Split(sort, ".")
+		sortvalue, order := parts[0], parts[1]
+		query += " order by " + sortvalue
+		if order == "desc" {
+			query += " desc"
+		} else if order == "asc" {
+			query += " asc"
+		}
+	}
+	query += " limit $1 offset $2"
+ 	rows, err := s.DB.QueryContext(ctx, query, pagesize, (pagenumber - 1) * pagesize)
 	if err != nil {
 		return nil, err
 	}

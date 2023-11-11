@@ -21,6 +21,10 @@ message createCardResponse {
 
 message getCardRequest {
     string AccessToken = 1;
+    string FilterValues = 2;
+    string SortValue = 3;
+    string PageSize = 4;
+    string PageNumber = 5;
 }
 
 message CardRecord {
