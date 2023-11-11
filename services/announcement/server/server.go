@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"log"
+	"strconv"
+	"strings"
 
 	"github.com/KISS-Keep-It-Simple-Stupid/TrekDestinyBackend/services/announcement/db"
 	"github.com/KISS-Keep-It-Simple-Stupid/TrekDestinyBackend/services/announcement/helper"
@@ -78,7 +80,11 @@ func (s *Repository) GetCard(ctx context.Context, r *pb.GetCardRequest) (*pb.Get
 		}
 		return resp, nil
 	}
-	resp, err := s.DB.GetAnnouncementDetails()
+	filter := strings.Split(r.FilterValues, ",")
+	sort := r.SortValue
+	pagesize, _ := strconv.Atoi(r.PageSize)
+	pagenumber, _ := strconv.Atoi(r.PageNumber)
+	resp, err := s.DB.GetAnnouncementDetails(filter, sort, pagesize, pagenumber)
 	if err != nil {
 		log.Println(err.Error())
 		err := errors.New("internal error while getting announcement info - announcement service")

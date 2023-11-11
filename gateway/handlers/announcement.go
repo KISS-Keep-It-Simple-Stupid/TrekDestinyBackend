@@ -11,6 +11,8 @@ import (
 	announcement_pb "github.com/KISS-Keep-It-Simple-Stupid/TrekDestinyBackend/gateway/services/announcement"
 )
 
+
+
 func (s *Repository) CreateCard(w http.ResponseWriter, r *http.Request) {
 	reqToken := r.Header.Get("Authorization")
 	splitToken := strings.Split(reqToken, "Jwt ")
@@ -55,6 +57,17 @@ func (s *Repository) GetCard(w http.ResponseWriter, r *http.Request) {
 	reqToken = splitToken[1]
 	getcardReq := &announcement_pb.GetCardRequest{}
 	getcardReq.AccessToken = reqToken
+
+	queryParams := r.URL.Query()
+	filterValues := queryParams.Get("filter")
+	sortValue := queryParams.Get("sort")
+	pageSize := queryParams.Get("page-size")
+	pageNumber := queryParams.Get("page-number")
+	getcardReq.FilterValues = filterValues
+	getcardReq.SortValue = sortValue
+	getcardReq.PageSize = pageSize
+	getcardReq.PageNumber = pageNumber
+
 	resp, err := s.announcement_client.GetCard(context.Background(), getcardReq)
 	if err != nil {
 		helpers.MessageGenerator(w, err.Error(), http.StatusInternalServerError)
