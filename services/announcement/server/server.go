@@ -102,3 +102,33 @@ func (s *Repository) GetCard(ctx context.Context, r *pb.GetCardRequest) (*pb.Get
 	resp.Message = "success"
 	return resp, nil
 }
+
+
+func (s *Repository) CreateOffer(ctx context.Context, r *pb.CreateOfferRequest) (*pb.CreateOfferResponse, error) {
+	claims, err := helper.DecodeToken(r.AccessToken)
+	if err != nil {
+		resp := &pb.CreateOfferResponse{
+			Message: "User is UnAuthorized - announcement service",
+		}
+		return resp, nil
+	}
+
+	user_id, err := s.DB.GetIdFromUsername(claims.UserName)
+	if err != nil {
+		respErr := errors.New("internal server error while converting username to id - announcement service")
+		log.Println(err)
+		return nil, respErr
+	}
+
+	err = s.DB.InsertOffer(r, user_id)
+	if err != nil {
+		respErr := errors.New("internal server error while adding new offer - announcement service")
+		log.Println(err)
+		return nil, respErr
+	}
+
+	resp := pb.CreateOfferResponse{
+		Message: "success",
+	}
+	return &resp, nil
+}

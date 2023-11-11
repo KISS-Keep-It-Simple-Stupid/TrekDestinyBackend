@@ -45,7 +45,17 @@ message getCardResponse {
     string Message = 2;
 }
 
+message createOfferRequest {
+    string AccessToken = 1;
+    int32 AnnouncementId = 2;
+}
+
+message createOfferResponse {
+    string Message = 1;
+}
+
 service Announcement {
     rpc CreateCard(createCardRequest) returns (createCardResponse);
     rpc GetCard(getCardRequest) returns (getCardResponse);
+    rpc CreateOffer(createOfferRequest) returns (createOfferResponse);
 }

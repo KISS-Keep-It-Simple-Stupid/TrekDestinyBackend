@@ -24,6 +24,7 @@ const _ = grpc.SupportPackageIsVersion7
 type AnnouncementClient interface {
 	CreateCard(ctx context.Context, in *CreateCardRequest, opts ...grpc.CallOption) (*CreateCardResponse, error)
 	GetCard(ctx context.Context, in *GetCardRequest, opts ...grpc.CallOption) (*GetCardResponse, error)
+	CreateOffer(ctx context.Context, in *CreateOfferRequest, opts ...grpc.CallOption) (*CreateOfferResponse, error)
 }
 
 type announcementClient struct {
@@ -52,12 +53,22 @@ func (c *announcementClient) GetCard(ctx context.Context, in *GetCardRequest, op
 	return out, nil
 }
 
+func (c *announcementClient) CreateOffer(ctx context.Context, in *CreateOfferRequest, opts ...grpc.CallOption) (*CreateOfferResponse, error) {
+	out := new(CreateOfferResponse)
+	err := c.cc.Invoke(ctx, "/Announcement/CreateOffer", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // AnnouncementServer is the server API for Announcement service.
 // All implementations must embed UnimplementedAnnouncementServer
 // for forward compatibility
 type AnnouncementServer interface {
 	CreateCard(context.Context, *CreateCardRequest) (*CreateCardResponse, error)
 	GetCard(context.Context, *GetCardRequest) (*GetCardResponse, error)
+	CreateOffer(context.Context, *CreateOfferRequest) (*CreateOfferResponse, error)
 	mustEmbedUnimplementedAnnouncementServer()
 }
 
@@ -70,6 +81,9 @@ func (UnimplementedAnnouncementServer) CreateCard(context.Context, *CreateCardRe
 }
 func (UnimplementedAnnouncementServer) GetCard(context.Context, *GetCardRequest) (*GetCardResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetCard not implemented")
+}
+func (UnimplementedAnnouncementServer) CreateOffer(context.Context, *CreateOfferRequest) (*CreateOfferResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateOffer not implemented")
 }
 func (UnimplementedAnnouncementServer) mustEmbedUnimplementedAnnouncementServer() {}
 
@@ -120,6 +134,24 @@ func _Announcement_GetCard_Handler(srv interface{}, ctx context.Context, dec fun
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Announcement_CreateOffer_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateOfferRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AnnouncementServer).CreateOffer(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/Announcement/CreateOffer",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AnnouncementServer).CreateOffer(ctx, req.(*CreateOfferRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Announcement_ServiceDesc is the grpc.ServiceDesc for Announcement service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -134,6 +166,10 @@ var Announcement_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetCard",
 			Handler:    _Announcement_GetCard_Handler,
+		},
+		{
+			MethodName: "CreateOffer",
+			Handler:    _Announcement_CreateOffer_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

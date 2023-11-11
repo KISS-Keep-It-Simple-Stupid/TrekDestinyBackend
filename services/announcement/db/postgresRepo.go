@@ -161,3 +161,14 @@ func (s *PostgresRepository) GetLanguagesOfAnnouncement(announcement_id int) ([]
 	}
 	return languages, nil
 }
+
+func (s *PostgresRepository) InsertOffer(offerInfo *pb.CreateOfferRequest, user_id int) (error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
+	defer cancel()
+	query := `insert into announcement_offer (announcement_id, host_id) values ($1, $2)`
+	_, err := s.DB.ExecContext(ctx, query, offerInfo.AnnouncementId, user_id)
+	if err != nil {
+		return err
+	}
+	return nil
+}
