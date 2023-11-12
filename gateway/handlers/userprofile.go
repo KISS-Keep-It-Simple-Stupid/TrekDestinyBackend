@@ -64,24 +64,3 @@ func (s *Repository) EditProfile(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (s *Repository) GetNotif(w http.ResponseWriter, r *http.Request) {
-	reqToken := r.Header.Get("Authorization")
-	splitToken := strings.Split(reqToken, "Jwt ")
-	if len(splitToken) < 2 {
-		helpers.MessageGenerator(w, "User is UnAuthorized", http.StatusUnauthorized)
-		return
-	}
-	reqToken = splitToken[1]
-	getNotifReq := &userprofile_pb.UserNotificationRequest{}
-	getNotifReq.AccessToken = reqToken
-	resp, err := s.userprofile_client.UserNotifications(context.Background(), getNotifReq)
-	if err != nil {
-		helpers.MessageGenerator(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	if resp.Message == "success" || resp.Message == "There are no notifications" {
-		helpers.ResponseGenerator(w, resp)
-	} else {
-		helpers.MessageGenerator(w, resp.Message, http.StatusBadRequest)
-	}
-}

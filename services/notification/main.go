@@ -46,7 +46,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	handler := handlers.New(myhub)
+	handler := handlers.New(myhub, dbRepo)
 	go rabbitQueue.Up()
 	server := http.Server{
 		Addr:    ":" + port,

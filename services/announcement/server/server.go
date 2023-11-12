@@ -3,23 +3,28 @@ package server
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log"
 	"strconv"
 	"strings"
 
 	"github.com/KISS-Keep-It-Simple-Stupid/TrekDestinyBackend/services/announcement/db"
 	"github.com/KISS-Keep-It-Simple-Stupid/TrekDestinyBackend/services/announcement/helper"
+	"github.com/KISS-Keep-It-Simple-Stupid/TrekDestinyBackend/services/announcement/models"
 	"github.com/KISS-Keep-It-Simple-Stupid/TrekDestinyBackend/services/announcement/pb"
+	"github.com/KISS-Keep-It-Simple-Stupid/TrekDestinyBackend/services/announcement/queue"
 )
 
 type Repository struct {
 	pb.UnimplementedAnnouncementServer
-	DB db.Repository
+	DB    db.Repository
+	Queue *queue.Queue
 }
 
-func New(db db.Repository) *Repository {
+func New(db db.Repository, q *queue.Queue) *Repository {
 	return &Repository{
-		DB: db,
+		DB:    db,
+		Queue: q,
 	}
 }
 
@@ -103,7 +108,6 @@ func (s *Repository) GetCard(ctx context.Context, r *pb.GetCardRequest) (*pb.Get
 	return resp, nil
 }
 
-
 func (s *Repository) CreateOffer(ctx context.Context, r *pb.CreateOfferRequest) (*pb.CreateOfferResponse, error) {
 	claims, err := helper.DecodeToken(r.AccessToken)
 	if err != nil {
@@ -113,20 +117,28 @@ func (s *Repository) CreateOffer(ctx context.Context, r *pb.CreateOfferRequest) 
 		return resp, nil
 	}
 
-	user_id, err := s.DB.GetIdFromUsername(claims.UserName)
-	if err != nil {
-		respErr := errors.New("internal server error while converting username to id - announcement service")
-		log.Println(err)
-		return nil, respErr
-	}
-
-	err = s.DB.InsertOffer(r, user_id)
+	err = s.DB.InsertOffer(r, claims.UserID)
 	if err != nil {
 		respErr := errors.New("internal server error while adding new offer - announcement service")
 		log.Println(err)
 		return nil, respErr
 	}
 
+	guestID, err := s.DB.GetGuestID(int(r.AnnouncementId))
+	if err != nil {
+		respErr := errors.New("internal server error while getting guest id - announcement service")
+		log.Println(err)
+		return nil, respErr
+	}
+
+	go func(host string, guest int, q *queue.Queue) {
+		notifMessage := models.NotificationMessage{
+			UserID:  guest,
+			Message: fmt.Sprintf("%s sent you a hosting request", host),
+		}
+		q.Send(&notifMessage)
+	}(claims.UserName, guestID, s.Queue)
+	
 	resp := pb.CreateOfferResponse{
 		Message: "success",
 	}

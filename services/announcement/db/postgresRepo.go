@@ -3,6 +3,7 @@ package db
 import (
 	"context"
 	"database/sql"
+	"log"
 	"strings"
 	"time"
 
@@ -48,10 +49,10 @@ func (s *PostgresRepository) InsertAnnouncement(announcementInfo *pb.CreateCardR
 		return -1, err
 	}
 	var announcement_id int
-    err = s.DB.QueryRow("select id from announcement order by id desc limit 1").Scan(&announcement_id)
-    if err != nil {
-        return -1, err
-    }
+	err = s.DB.QueryRow("select id from announcement order by id desc limit 1").Scan(&announcement_id)
+	if err != nil {
+		return -1, err
+	}
 	return int(announcement_id), nil
 }
 
@@ -92,7 +93,7 @@ func (s *PostgresRepository) GetAnnouncementDetails(filter []string, sort string
 	resp := pb.GetCardResponse{}
 	query := "select id, user_id, description, startdate, enddate, city, state, country, numberoftravelers from announcement"
 	if !(len(filter) == 1 && filter[0] == "") {
-		for i, singlefilter := range(filter) {
+		for i, singlefilter := range filter {
 			parts := strings.Split(singlefilter, ":")
 			field, value := parts[0], parts[1]
 			if i != 0 {
@@ -114,7 +115,7 @@ func (s *PostgresRepository) GetAnnouncementDetails(filter []string, sort string
 		}
 	}
 	query += " limit $1 offset $2"
- 	rows, err := s.DB.QueryContext(ctx, query, pagesize, (pagenumber - 1) * pagesize)
+	rows, err := s.DB.QueryContext(ctx, query, pagesize, (pagenumber-1)*pagesize)
 	if err != nil {
 		return nil, err
 	}
@@ -123,9 +124,9 @@ func (s *PostgresRepository) GetAnnouncementDetails(filter []string, sort string
 		var startdate time.Time
 		var enddate time.Time
 		err := rows.Scan(
-			&card.CardId, 
-			&card.UserId, 
-			&card.Description, 
+			&card.CardId,
+			&card.UserId,
+			&card.Description,
 			&startdate,
 			&enddate,
 			&card.DestinationCity,
@@ -162,13 +163,26 @@ func (s *PostgresRepository) GetLanguagesOfAnnouncement(announcement_id int) ([]
 	return languages, nil
 }
 
-func (s *PostgresRepository) InsertOffer(offerInfo *pb.CreateOfferRequest, user_id int) (error) {
+func (s *PostgresRepository) InsertOffer(offerInfo *pb.CreateOfferRequest, user_id int) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
 	defer cancel()
 	query := `insert into announcement_offer (announcement_id, host_id) values ($1, $2)`
-	_, err := s.DB.ExecContext(ctx, query, offerInfo.AnnouncementId, user_id)
+	_, err := s.DB.ExecContext(ctx, query, int(offerInfo.AnnouncementId), user_id)
 	if err != nil {
+		log.Println(err.Error())
 		return err
 	}
 	return nil
+}
+
+func (s *PostgresRepository) GetGuestID(announcementID int) (int, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
+	defer cancel()
+	query := "select user_id from announcement where id = $1"
+	guestID := 0
+	err := s.DB.QueryRowContext(ctx, query, announcementID).Scan(&guestID)
+	if err != nil {
+		return -1, err
+	}
+	return guestID, nil
 }

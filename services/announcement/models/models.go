@@ -7,6 +7,7 @@ import (
 type JwtClaims struct {
 	jwt.RegisteredClaims
 	UserName string
+	UserID   int
 }
 
 type NotificationMessage struct {

@@ -75,33 +75,3 @@ func (s *Repository) EditProfile(ctx context.Context, r *pb.EditProfileRequest) 
 	return resp, nil
 }
 
-func (s *Repository) UserNotifications(ctx context.Context, r *pb.UserNotificationRequest) (*pb.UserNotificationResponse, error) {
-	claims, err := helper.DecodeToken(r.AccessToken)
-	if err != nil {
-		log.Println(err.Error())
-		resp := &pb.UserNotificationResponse{
-			Message: err.Error(),
-		}
-		return resp, nil
-	}
-
-	notfis, err := s.DB.GetNotificationByID(claims.UserID)
-	if err != nil {
-		log.Println(err.Error())
-		err := errors.New("internal error while getting user notifications - userprofile service")
-		return nil, err
-	}
-
-	if len(notfis) == 0 {
-		resp := &pb.UserNotificationResponse{
-			Message: "There are no notifications",
-		}
-		return resp, nil
-	}
-
-	resp := &pb.UserNotificationResponse{
-		Notifs:  notfis,
-		Message: "success",
-	}
-	return resp, nil
-}

@@ -24,7 +24,6 @@ const _ = grpc.SupportPackageIsVersion7
 type UserProfileClient interface {
 	ProfileDetails(ctx context.Context, in *ProfileDetailsRequest, opts ...grpc.CallOption) (*ProfileDetailsResponse, error)
 	EditProfile(ctx context.Context, in *EditProfileRequest, opts ...grpc.CallOption) (*EditProfileResponse, error)
-	UserNotifications(ctx context.Context, in *UserNotificationRequest, opts ...grpc.CallOption) (*UserNotificationResponse, error)
 }
 
 type userProfileClient struct {
@@ -53,22 +52,12 @@ func (c *userProfileClient) EditProfile(ctx context.Context, in *EditProfileRequ
 	return out, nil
 }
 
-func (c *userProfileClient) UserNotifications(ctx context.Context, in *UserNotificationRequest, opts ...grpc.CallOption) (*UserNotificationResponse, error) {
-	out := new(UserNotificationResponse)
-	err := c.cc.Invoke(ctx, "/UserProfile/UserNotifications", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 // UserProfileServer is the server API for UserProfile service.
 // All implementations must embed UnimplementedUserProfileServer
 // for forward compatibility
 type UserProfileServer interface {
 	ProfileDetails(context.Context, *ProfileDetailsRequest) (*ProfileDetailsResponse, error)
 	EditProfile(context.Context, *EditProfileRequest) (*EditProfileResponse, error)
-	UserNotifications(context.Context, *UserNotificationRequest) (*UserNotificationResponse, error)
 	mustEmbedUnimplementedUserProfileServer()
 }
 
@@ -81,9 +70,6 @@ func (UnimplementedUserProfileServer) ProfileDetails(context.Context, *ProfileDe
 }
 func (UnimplementedUserProfileServer) EditProfile(context.Context, *EditProfileRequest) (*EditProfileResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method EditProfile not implemented")
-}
-func (UnimplementedUserProfileServer) UserNotifications(context.Context, *UserNotificationRequest) (*UserNotificationResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method UserNotifications not implemented")
 }
 func (UnimplementedUserProfileServer) mustEmbedUnimplementedUserProfileServer() {}
 
@@ -134,24 +120,6 @@ func _UserProfile_EditProfile_Handler(srv interface{}, ctx context.Context, dec 
 	return interceptor(ctx, in, info, handler)
 }
 
-func _UserProfile_UserNotifications_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(UserNotificationRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(UserProfileServer).UserNotifications(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/UserProfile/UserNotifications",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(UserProfileServer).UserNotifications(ctx, req.(*UserNotificationRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 // UserProfile_ServiceDesc is the grpc.ServiceDesc for UserProfile service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -166,10 +134,6 @@ var UserProfile_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "EditProfile",
 			Handler:    _UserProfile_EditProfile_Handler,
-		},
-		{
-			MethodName: "UserNotifications",
-			Handler:    _UserProfile_UserNotifications_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

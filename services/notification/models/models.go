@@ -1,9 +1,17 @@
 package models
 
-import "github.com/gorilla/websocket"
+import (
+	"github.com/golang-jwt/jwt/v5"
+	"github.com/gorilla/websocket"
+)
 
 type NotifMessage struct {
 	UserID  int    `json:"user_id"`
+	Message string `json:"message"`
+}
+
+type NotifResponse struct {
+	ID      int    `json:"id"`
 	Message string `json:"message"`
 }
 
@@ -22,4 +30,10 @@ type Hub struct {
 	Disconnect chan *Client
 	Send       chan int
 	Clients    map[int]*Client
+}
+
+type JwtClaims struct {
+	jwt.RegisteredClaims
+	UserName string
+	UserID   int
 }

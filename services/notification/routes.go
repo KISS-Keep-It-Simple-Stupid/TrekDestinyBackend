@@ -19,5 +19,6 @@ func getRoutes(handler *handlers.Repository) http.Handler {
 		MaxAge:           300,
 	}))
 	mux.Get("/{id}", handler.Subscribe)
+	mux.Get("/notif", handler.GetNotif)
 	return mux
 }

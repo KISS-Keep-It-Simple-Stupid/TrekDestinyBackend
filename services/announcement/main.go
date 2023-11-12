@@ -45,7 +45,7 @@ func main() {
 		log.Fatal(err)
 	}
 	repository := db.NewPostgresRepository(dbConn)
-	server := server.New(repository)
+	server := server.New(repository, rabbitQueue)
 	lis, err := net.Listen("tcp", ":"+port)
 	if err != nil {
 		log.Fatalln(err.Error())

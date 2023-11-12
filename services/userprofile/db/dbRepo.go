@@ -7,5 +7,4 @@ type Repository interface {
 	UpdateUserInformation(username string, userInfo *pb.EditProfileRequest) error
 	CheckUserExistance(userUserName string) (bool, error)
 	GetUserPassword(username string) (string, error) 
-	GetNotificationByID(userid int) ([]*pb.Notifications, error)
 }

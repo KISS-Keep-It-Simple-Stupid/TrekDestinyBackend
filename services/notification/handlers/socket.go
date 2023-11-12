@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	"github.com/KISS-Keep-It-Simple-Stupid/TrekDestinyBackend/services/notification/client"
+	"github.com/KISS-Keep-It-Simple-Stupid/TrekDestinyBackend/services/notification/dbrepo"
 	"github.com/KISS-Keep-It-Simple-Stupid/TrekDestinyBackend/services/notification/models"
 	"github.com/go-chi/chi/v5"
 	"github.com/gorilla/websocket"
@@ -14,9 +15,10 @@ import (
 type Repository struct {
 	upgrader websocket.Upgrader
 	hub      *models.Hub
+	DB       dbrepo.Repository
 }
 
-func New(h *models.Hub) *Repository {
+func New(h *models.Hub, db dbrepo.Repository) *Repository {
 	return &Repository{
 		upgrader: websocket.Upgrader{
 			ReadBufferSize:  1024,
@@ -24,6 +26,7 @@ func New(h *models.Hub) *Repository {
 			CheckOrigin:     func(r *http.Request) bool { return true },
 		},
 		hub: h,
+		DB:  db,
 	}
 }
 

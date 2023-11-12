@@ -1,7 +1,7 @@
 package helper
 
 import (
-	"github.com/KISS-Keep-It-Simple-Stupid/TrekDestinyBackend/services/authentication/models"
+	"github.com/KISS-Keep-It-Simple-Stupid/TrekDestinyBackend/services/announcement/models"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/spf13/viper"
 )

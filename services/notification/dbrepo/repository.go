@@ -4,4 +4,5 @@ import "github.com/KISS-Keep-It-Simple-Stupid/TrekDestinyBackend/services/notifi
 
 type Repository interface {
 	InsertNotification(message models.NotifMessage) error
+	GetNotificationByID(userid int) ([]*models.NotifResponse, error)
 }

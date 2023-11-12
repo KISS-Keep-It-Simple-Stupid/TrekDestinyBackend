@@ -35,3 +35,29 @@ func (repo *postgresRepo) InsertNotification(message models.NotifMessage) error 
 
 	return nil
 }
+
+func (s *postgresRepo) GetNotificationByID(userid int) ([]*models.NotifResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
+	defer cancel()
+	query := `select id , message from notifications where user_id = $1`
+	rows, err := s.db.QueryContext(ctx, query, userid)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return make([]*models.NotifResponse, 0), nil
+		}
+		return nil, err
+	}
+
+	notifs := make([]*models.NotifResponse, 0)
+
+	for rows.Next() {
+		temp_notif := models.NotifResponse{}
+		err := rows.Scan(&temp_notif.ID, &temp_notif.Message)
+		if err != nil {
+			return nil, err
+		}
+		notifs = append(notifs, &temp_notif)
+	}
+
+	return notifs, nil
+}
