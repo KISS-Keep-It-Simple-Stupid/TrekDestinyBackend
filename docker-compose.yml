@@ -98,9 +98,29 @@ services:
       - trekdestinyData_notif:/var/lib/postgresql/data
     env_file:
       - postgres.env
-
+  chat_db:
+    image: postgres:16.0-alpine
+    container_name: chat_db
+    volumes:
+      - trekdestinyData_chat:/var/lib/postgresql/data
+    restart: on-failure
+    networks:
+      - trekdestiny
+    env_file:
+      - postgres.env
+  chat:
+    build: ./services/chat
+    container_name: chat
+    depends_on:
+      - chat_db
+    restart: on-failure
+    networks:
+      - trekdestiny
+    ports:
+      - 9092:8084
 volumes:
   trekdestinyData:
+  trekdestinyData_chat:
   rabbit-data:
   rabbit-logs:
   trekdestinyData_notif:
