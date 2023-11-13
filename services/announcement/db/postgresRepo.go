@@ -218,3 +218,36 @@ func (s *PostgresRepository) GetOfferDetails(announcement_id int) (*pb.GetOfferR
 	}
 	return &resp, nil
 }
+
+func (s *PostgresRepository) GetProfileAnnouncementDetails(user_id int) (*pb.GetCardProfileResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
+	defer cancel()
+	resp := pb.GetCardProfileResponse{}
+	query := "select id, user_id, description, startdate, enddate, city, state, country, numberoftravelers from announcement where user_id = $1"
+	rows, err := s.DB.QueryContext(ctx, query, user_id)
+	if err != nil {
+		return nil, err
+	}
+	for rows.Next() {
+		card := pb.CardRecord{}
+		var startdate time.Time
+		var enddate time.Time
+		err := rows.Scan(
+			&card.CardId,
+			&card.UserId,
+			&card.Description,
+			&startdate,
+			&enddate,
+			&card.DestinationCity,
+			&card.DestinationState,
+			&card.DestinationCountry,
+			&card.NumberOfTravelers)
+		if err != nil {
+			return nil, err
+		}
+		card.StartDate = startdate.Format("2006-01-02")
+		card.EndDate = enddate.Format("2006-01-02")
+		resp.Cards = append(resp.Cards, &card)
+	}
+	return &resp, nil
+}

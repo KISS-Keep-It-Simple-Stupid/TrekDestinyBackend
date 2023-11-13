@@ -30,5 +30,6 @@ func getRoutes(handler *handlers.Repository) http.Handler {
 	mux.Get("/get-card", handler.GetCard)
 	mux.Post("/create-offer", handler.CreateOffer)
 	mux.Post("/get-offer", handler.GetOffer)
+	mux.Get("/get-card-profile", handler.GetCardProfile)
 	return mux
 }

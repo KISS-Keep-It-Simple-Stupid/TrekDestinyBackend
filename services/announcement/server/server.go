@@ -163,3 +163,30 @@ func (s *Repository) GetOffer(ctx context.Context, r *pb.GetOfferRequest) (*pb.G
 	resp.Message = "success"
 	return resp, nil
 }
+
+func (s *Repository) GetCardProfile(ctx context.Context, r *pb.GetCardProfileRequest) (*pb.GetCardProfileResponse, error) {
+	claims, err := helper.DecodeToken(r.AccessToken)
+	if err != nil {
+		resp := &pb.GetCardProfileResponse{
+			Message: "User is UnAuthorized - announcement service",
+		}
+		return resp, nil
+	}
+	resp, err := s.DB.GetProfileAnnouncementDetails(claims.UserID)
+	if err != nil {
+		log.Println(err.Error())
+		err := errors.New("internal error while getting profile announcement info - announcement service")
+		return nil, err
+	}
+	for _, card := range resp.Cards {
+		languages, err := s.DB.GetLanguagesOfAnnouncement(int(card.CardId))
+		if err != nil {
+			respErr := errors.New("internal server error while adding new profile announcement language - announcement service")
+			log.Println(err)
+			return nil, respErr
+		}
+		card.PreferredLanguages = languages[:]
+	}
+	resp.Message = "success"
+	return resp, nil
+}

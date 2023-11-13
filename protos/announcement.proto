@@ -71,9 +71,19 @@ message getOfferResponse {
     string Message = 2;
 }
 
+message getCardProfileRequest {
+    string AccessToken = 1;
+}
+
+message getCardProfileResponse {
+    repeated CardRecord Cards = 1;
+    string Message = 2;
+}
+
 service Announcement {
     rpc CreateCard(createCardRequest) returns (createCardResponse);
     rpc GetCard(getCardRequest) returns (getCardResponse);
     rpc CreateOffer(createOfferRequest) returns (createOfferResponse);
     rpc GetOffer(getOfferRequest) returns (getOfferResponse);
+    rpc GetCardProfile(getCardProfileRequest) returns (getCardProfileResponse);
 }
