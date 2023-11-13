@@ -24,6 +24,7 @@ const _ = grpc.SupportPackageIsVersion7
 type UserProfileClient interface {
 	ProfileDetails(ctx context.Context, in *ProfileDetailsRequest, opts ...grpc.CallOption) (*ProfileDetailsResponse, error)
 	EditProfile(ctx context.Context, in *EditProfileRequest, opts ...grpc.CallOption) (*EditProfileResponse, error)
+	UploadImage(ctx context.Context, in *ImageRequest, opts ...grpc.CallOption) (*ImageResponse, error)
 }
 
 type userProfileClient struct {
@@ -52,12 +53,22 @@ func (c *userProfileClient) EditProfile(ctx context.Context, in *EditProfileRequ
 	return out, nil
 }
 
+func (c *userProfileClient) UploadImage(ctx context.Context, in *ImageRequest, opts ...grpc.CallOption) (*ImageResponse, error) {
+	out := new(ImageResponse)
+	err := c.cc.Invoke(ctx, "/UserProfile/UploadImage", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // UserProfileServer is the server API for UserProfile service.
 // All implementations must embed UnimplementedUserProfileServer
 // for forward compatibility
 type UserProfileServer interface {
 	ProfileDetails(context.Context, *ProfileDetailsRequest) (*ProfileDetailsResponse, error)
 	EditProfile(context.Context, *EditProfileRequest) (*EditProfileResponse, error)
+	UploadImage(context.Context, *ImageRequest) (*ImageResponse, error)
 	mustEmbedUnimplementedUserProfileServer()
 }
 
@@ -70,6 +81,9 @@ func (UnimplementedUserProfileServer) ProfileDetails(context.Context, *ProfileDe
 }
 func (UnimplementedUserProfileServer) EditProfile(context.Context, *EditProfileRequest) (*EditProfileResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method EditProfile not implemented")
+}
+func (UnimplementedUserProfileServer) UploadImage(context.Context, *ImageRequest) (*ImageResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UploadImage not implemented")
 }
 func (UnimplementedUserProfileServer) mustEmbedUnimplementedUserProfileServer() {}
 
@@ -120,6 +134,24 @@ func _UserProfile_EditProfile_Handler(srv interface{}, ctx context.Context, dec 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _UserProfile_UploadImage_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ImageRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserProfileServer).UploadImage(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/UserProfile/UploadImage",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserProfileServer).UploadImage(ctx, req.(*ImageRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // UserProfile_ServiceDesc is the grpc.ServiceDesc for UserProfile service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -134,6 +166,10 @@ var UserProfile_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "EditProfile",
 			Handler:    _UserProfile_EditProfile_Handler,
+		},
+		{
+			MethodName: "UploadImage",
+			Handler:    _UserProfile_UploadImage_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

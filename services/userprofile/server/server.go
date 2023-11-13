@@ -1,24 +1,31 @@
 package server
 
 import (
+	"bytes"
 	"context"
 	"errors"
+	"fmt"
 	"log"
 
 	"github.com/KISS-Keep-It-Simple-Stupid/TrekDestinyBackend/services/userprofile/db"
 	"github.com/KISS-Keep-It-Simple-Stupid/TrekDestinyBackend/services/userprofile/helper"
 	"github.com/KISS-Keep-It-Simple-Stupid/TrekDestinyBackend/services/userprofile/pb"
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/spf13/viper"
 	"golang.org/x/crypto/bcrypt"
 )
 
 type Repository struct {
 	pb.UnimplementedUserProfileServer
 	DB db.Repository
+	S3 *s3.S3
 }
 
-func New(db db.Repository) *Repository {
+func New(db db.Repository, s3 *s3.S3) *Repository {
 	return &Repository{
 		DB: db,
+		S3: s3,
 	}
 }
 
@@ -34,6 +41,12 @@ func (s *Repository) ProfileDetails(ctx context.Context, r *pb.ProfileDetailsReq
 	if err != nil {
 		log.Println(err.Error())
 		err := errors.New("internal error while getting user info - userprofile service")
+		return nil, err
+	}
+	resp.Image, err = helper.GetImageURL(s.S3, fmt.Sprintf("user-%d", claims.UserID))
+	if err != nil {
+		log.Println(err.Error())
+		err := errors.New("internal error while gettint user image from object storage - userprofile service")
 		return nil, err
 	}
 	resp.Message = "success"
@@ -75,3 +88,32 @@ func (s *Repository) EditProfile(ctx context.Context, r *pb.EditProfileRequest) 
 	return resp, nil
 }
 
+func (s *Repository) UploadImage(ctx context.Context, r *pb.ImageRequest) (*pb.ImageResponse, error) {
+	claims, err := helper.DecodeToken(r.AccessToken)
+	if err != nil {
+		resp := &pb.ImageResponse{
+			Message: "User is UnAuthorized",
+		}
+		return resp, nil
+	}
+	bucketName := viper.Get("OBJECT_STORAGE_BUCKET_NAME").(string)
+	// Upload the image to S3
+	_, err = s.S3.PutObject(&s3.PutObjectInput{
+		Bucket:             aws.String(bucketName),
+		Key:                aws.String(fmt.Sprintf("user-%d", claims.UserID)),
+		ACL:                aws.String("private"), // Set ACL as needed
+		Body:               bytes.NewReader(r.ImageData),
+		ContentLength:      aws.Int64(int64(len(r.ImageData))),
+		ContentType:        aws.String("image/jpeg"), // Set content type based on your file type
+		ContentDisposition: aws.String("attachment"),
+	})
+	if err != nil {
+		log.Println(err.Error())
+		err := errors.New("internal error while uploading image to object storage - userprofile service")
+		return nil, err
+	}
+	resp := &pb.ImageResponse{
+		Message: "success",
+	}
+	return resp, nil
+}

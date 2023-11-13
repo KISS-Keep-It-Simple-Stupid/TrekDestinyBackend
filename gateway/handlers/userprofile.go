@@ -64,3 +64,45 @@ func (s *Repository) EditProfile(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func (s *Repository) UploadImage(w http.ResponseWriter, r *http.Request) {
+	reqToken := r.Header.Get("Authorization")
+	splitToken := strings.Split(reqToken, "Jwt ")
+	if len(splitToken) < 2 {
+		helpers.MessageGenerator(w, "User is UnAuthorized", http.StatusUnauthorized)
+		return
+	}
+	reqToken = splitToken[1]
+	// Parse the form data, including the uploaded file
+	err := r.ParseMultipartForm(10 << 20) // 10 MB limit for the image size
+	if err != nil {
+		helpers.MessageGenerator(w, "image size is too large", http.StatusBadRequest)
+		return
+	}
+
+	// Get the file from the form data
+	file, _, err := r.FormFile("image")
+	if err != nil {
+		helpers.MessageGenerator(w, "There is no image field in form data", http.StatusBadRequest)
+		return
+	}
+	defer file.Close()
+	image_data, err := io.ReadAll(file)
+	if err != nil {
+		helpers.MessageGenerator(w, "Image file is corrupted", http.StatusBadRequest)
+		return
+	}
+	uploadReq := &userprofile_pb.ImageRequest{
+		ImageData:   image_data,
+		AccessToken: reqToken,
+	}
+	resp, err := s.userprofile_client.UploadImage(context.Background(), uploadReq)
+	if err != nil {
+		helpers.MessageGenerator(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	if resp.Message == "success" {
+		helpers.MessageGenerator(w, "image uploaded", http.StatusOK)
+	} else {
+		helpers.MessageGenerator(w, resp.Message, http.StatusBadRequest)
+	}
+}

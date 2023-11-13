@@ -17,6 +17,7 @@ message profileDetailsResponse {
     string State = 10;
     string JoiningDate = 11;
     string Message = 12;
+    string image = 13;
 }
 
 message profileDetailsRequest{
@@ -38,7 +39,18 @@ message editProfileResponse{
     string Message = 1;
 }
 
+
+message ImageRequest {
+    bytes image_data = 1;
+    string AccessToken =2 ;
+  }
+
+message ImageResponse {
+    string Message = 1;
+  }
+
 service UserProfile {
     rpc ProfileDetails(profileDetailsRequest) returns (profileDetailsResponse);
     rpc EditProfile(editProfileRequest) returns (editProfileResponse);
+    rpc UploadImage (ImageRequest) returns (ImageResponse);
 }
