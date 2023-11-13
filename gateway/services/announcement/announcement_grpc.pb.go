@@ -25,6 +25,7 @@ type AnnouncementClient interface {
 	CreateCard(ctx context.Context, in *CreateCardRequest, opts ...grpc.CallOption) (*CreateCardResponse, error)
 	GetCard(ctx context.Context, in *GetCardRequest, opts ...grpc.CallOption) (*GetCardResponse, error)
 	CreateOffer(ctx context.Context, in *CreateOfferRequest, opts ...grpc.CallOption) (*CreateOfferResponse, error)
+	GetOffer(ctx context.Context, in *GetOfferRequest, opts ...grpc.CallOption) (*GetOfferResponse, error)
 }
 
 type announcementClient struct {
@@ -62,6 +63,15 @@ func (c *announcementClient) CreateOffer(ctx context.Context, in *CreateOfferReq
 	return out, nil
 }
 
+func (c *announcementClient) GetOffer(ctx context.Context, in *GetOfferRequest, opts ...grpc.CallOption) (*GetOfferResponse, error) {
+	out := new(GetOfferResponse)
+	err := c.cc.Invoke(ctx, "/Announcement/GetOffer", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // AnnouncementServer is the server API for Announcement service.
 // All implementations must embed UnimplementedAnnouncementServer
 // for forward compatibility
@@ -69,6 +79,7 @@ type AnnouncementServer interface {
 	CreateCard(context.Context, *CreateCardRequest) (*CreateCardResponse, error)
 	GetCard(context.Context, *GetCardRequest) (*GetCardResponse, error)
 	CreateOffer(context.Context, *CreateOfferRequest) (*CreateOfferResponse, error)
+	GetOffer(context.Context, *GetOfferRequest) (*GetOfferResponse, error)
 	mustEmbedUnimplementedAnnouncementServer()
 }
 
@@ -84,6 +95,9 @@ func (UnimplementedAnnouncementServer) GetCard(context.Context, *GetCardRequest)
 }
 func (UnimplementedAnnouncementServer) CreateOffer(context.Context, *CreateOfferRequest) (*CreateOfferResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateOffer not implemented")
+}
+func (UnimplementedAnnouncementServer) GetOffer(context.Context, *GetOfferRequest) (*GetOfferResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetOffer not implemented")
 }
 func (UnimplementedAnnouncementServer) mustEmbedUnimplementedAnnouncementServer() {}
 
@@ -152,6 +166,24 @@ func _Announcement_CreateOffer_Handler(srv interface{}, ctx context.Context, dec
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Announcement_GetOffer_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetOfferRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AnnouncementServer).GetOffer(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/Announcement/GetOffer",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AnnouncementServer).GetOffer(ctx, req.(*GetOfferRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Announcement_ServiceDesc is the grpc.ServiceDesc for Announcement service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -170,6 +202,10 @@ var Announcement_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "CreateOffer",
 			Handler:    _Announcement_CreateOffer_Handler,
+		},
+		{
+			MethodName: "GetOffer",
+			Handler:    _Announcement_GetOffer_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

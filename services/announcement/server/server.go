@@ -144,3 +144,22 @@ func (s *Repository) CreateOffer(ctx context.Context, r *pb.CreateOfferRequest) 
 	}
 	return &resp, nil
 }
+
+func (s *Repository) GetOffer(ctx context.Context, r *pb.GetOfferRequest) (*pb.GetOfferResponse, error) {
+	_, err := helper.DecodeToken(r.AccessToken)
+	if err != nil {
+		resp := &pb.GetOfferResponse{
+			Message: "User is UnAuthorized - announcement service",
+		}
+		return resp, nil
+	}
+	resp, err := s.DB.GetOfferDetails(int(r.AnnouncementId))
+	if err != nil {
+		log.Println(err.Error())
+		err := errors.New("internal error while getting offer info - announcement service")
+		return nil, err
+	}
+
+	resp.Message = "success"
+	return resp, nil
+}

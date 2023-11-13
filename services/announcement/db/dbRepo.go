@@ -11,4 +11,5 @@ type Repository interface {
 	GetLanguagesOfAnnouncement(announcement_id int) ([]string, error)
 	InsertOffer(offerInfo *pb.CreateOfferRequest, user_id int) error
 	GetGuestID(announcementID int) (int, error)
+	GetOfferDetails(announcement_id int) (*pb.GetOfferResponse, error)
 }

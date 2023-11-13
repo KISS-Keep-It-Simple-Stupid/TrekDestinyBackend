@@ -186,3 +186,35 @@ func (s *PostgresRepository) GetGuestID(announcementID int) (int, error) {
 	}
 	return guestID, nil
 }
+
+func (s *PostgresRepository) GetOfferDetails(announcement_id int) (*pb.GetOfferResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
+	defer cancel()
+	resp := pb.GetOfferResponse{}
+	query := "select host_id from announcement_offer where announcement_id = $1"
+	rows, err := s.DB.QueryContext(ctx, query, announcement_id)
+	if err != nil {
+		return nil, err
+	}
+	for rows.Next() {
+		offer := pb.OfferRecord{}
+		var firstname string
+		var lastname string
+		var username string
+		err := rows.Scan(
+			&offer.HostId)
+		if err != nil {
+			return nil, err
+		}
+		query := "select firstname, lastname, username from members where id = $1"
+		err = s.DB.QueryRowContext(ctx, query, offer.HostId).Scan(&firstname, &lastname, &username)
+		if err != nil {
+			return nil, err
+		}
+		offer.HostFirstName = firstname
+		offer.HostLastName = lastname
+		offer.HostUsername = username
+		resp.Offers = append(resp.Offers, &offer)
+	}
+	return &resp, nil
+}

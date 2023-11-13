@@ -54,8 +54,26 @@ message createOfferResponse {
     string Message = 1;
 }
 
+message getOfferRequest {
+    string AccessToken = 1;
+    int32 AnnouncementId = 2;
+}
+
+message OfferRecord {
+    int32 HostId = 1;
+    string HostFirstName = 2;
+    string HostLastName = 3;
+    string HostUsername = 4;
+}
+
+message getOfferResponse {
+    repeated OfferRecord offers = 1;
+    string Message = 2;
+}
+
 service Announcement {
     rpc CreateCard(createCardRequest) returns (createCardResponse);
     rpc GetCard(getCardRequest) returns (getCardResponse);
     rpc CreateOffer(createOfferRequest) returns (createOfferResponse);
+    rpc GetOffer(getOfferRequest) returns (getOfferResponse);
 }
