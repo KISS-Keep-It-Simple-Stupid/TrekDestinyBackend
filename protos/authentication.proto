@@ -2,26 +2,25 @@ syntax = "proto3";
 
 option go_package = "/pb";
 
+
 message loginRequest{
     string Email = 1;
     string Password = 2;
 }
 
-
 message loginResponse {
     string AccessToken = 1;
     string RefreshToken = 2;
-    string Message =3;
+    string Message = 3;
 }
 
-
 message SignUpRequest {
-    string Email =1;
-    string UserName =2;
-    string Password =3;
-    string FirstName =4;
-    string LastName =5;
-    string BirthDate =6;
+    string Email = 1;
+    string UserName = 2;
+    string Password = 3;
+    string FirstName = 4;
+    string LastName = 5;
+    string BirthDate = 6;
     string State = 7;
     string Country = 8;
     int32 Gender = 9; 
@@ -50,8 +49,8 @@ message forgetPasswordResponse{
 }
 
 message resetPasswordRequest{
-    string AccessToken =1 ;
-    string NewPassword = 2 ;
+    string AccessToken = 1;
+    string NewPassword = 2;
 }
 
 message resetPasswordResponse{

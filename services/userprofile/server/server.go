@@ -46,7 +46,7 @@ func (s *Repository) ProfileDetails(ctx context.Context, r *pb.ProfileDetailsReq
 	resp.Image, err = helper.GetImageURL(s.S3, fmt.Sprintf("user-%d", claims.UserID))
 	if err != nil {
 		log.Println(err.Error())
-		err := errors.New("internal error while gettint user image from object storage - userprofile service")
+		err := errors.New("internal error while getting user image from object storage - userprofile service")
 		return nil, err
 	}
 	resp.Message = "success"

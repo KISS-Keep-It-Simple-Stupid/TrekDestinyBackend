@@ -24,19 +24,35 @@ func (s *PostgresRepository) GetUserDetails(username string) (*pb.ProfileDetails
 	defer cancel()
 	user := pb.ProfileDetailsResponse{}
 	var birth_date, joiningdate time.Time
-	query := `select email,username,firstname ,lastname , birthdate , city , country , gender , bio , state , joiningdate from members where username = $1`
+	query := `select email, username, firstname, lastname, birthdate, state, country, gender, joiningdate, ishost, 
+			COALESCE(NULLIF(bio, NULL), '') as bio,
+			COALESCE(NULLIF(city, NULL), '') as city,
+			COALESCE(NULLIF(address, NULL), '') as address,
+			COALESCE(NULLIF(phonenumber, NULL), '') as phonenumber,
+			COALESCE(NULLIF(ispetfirendly::text, ''), '') as ispetfirendly,
+			COALESCE(NULLIF(iskidfiendly::text, ''), '') as iskidfiendly,
+			COALESCE(NULLIF(issmokingallowed::text, ''), '') as issmokingallowed,
+			COALESCE(NULLIF(roomnumber, NULL), 0) as roomnumber
+			from members where username = $1`
 	err := s.DB.QueryRowContext(ctx, query, username).Scan(
 		&user.Email,
 		&user.UserName,
 		&user.FirstName,
 		&user.LastName,
 		&birth_date,
-		&user.City,
+		&user.State,
 		&user.Country,
 		&user.Gender,
+		&joiningdate,
+		&user.IsHost,
 		&user.Bio,
-		&user.State,
-		&joiningdate)
+		&user.City,
+		&user.Address,
+		&user.PhoneNumber,
+		&user.IsPetFriendly,
+		&user.IsKidFriendly,
+		&user.IsSmokingAllowed,
+		&user.RoomNumber)
 	if err != nil {
 		return nil, err
 	}

@@ -1,6 +1,7 @@
 package email
 
 import (
+	"log"
 	"net/smtp"
 
 	"github.com/spf13/viper"
@@ -20,6 +21,7 @@ func (s *Email) Send() error {
 	auth := smtp.PlainAuth("", s.From, s.Password, smtpHost)
 	err := smtp.SendMail(smtpHost+":"+smtpPort, auth, s.From, s.To, []byte(s.Text))
 	if err != nil {
+		log.Println(err)
 		return err
 	}
 	return nil
