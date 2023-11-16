@@ -74,20 +74,34 @@ func (s *PostgresRepository) UpdateUserInformation(username string, userInfo *pb
 		password = string(hashed_password)
 	}
 	query := `update members set  
-	password = COALESCE(NULLIF($1, ''), password) ,
-	firstname = COALESCE(NULLIF($2, ''), firstname),
-	lastname = COALESCE(NULLIF($3, ''), lastname),
-	city = COALESCE(NULLIF($4, ''), city),
-	country = COALESCE(NULLIF($5, ''), country),
-	bio = COALESCE(NULLIF($6, ''), bio)
-	where username=$7`
+		password = COALESCE(NULLIF($1, ''), password),
+		firstname = COALESCE(NULLIF($2, ''), firstname),
+		lastname = COALESCE(NULLIF($3, ''), lastname),
+		city = COALESCE(NULLIF($4, ''), city),
+		state = COALESCE(NULLIF($5, ''), state),
+		country = COALESCE(NULLIF($6, ''), country),
+		bio = COALESCE(NULLIF($7, ''), bio),
+		ishost = COALESCE(NULLIF($8, '')::boolean, ishost),
+		address = COALESCE(NULLIF($9, ''), address),
+		ispetfirendly = COALESCE(NULLIF($10, '')::boolean, ispetfirendly),
+		iskidfiendly = COALESCE(NULLIF($11, '')::boolean, iskidfiendly),
+		issmokingallowed = COALESCE(NULLIF($12, '')::boolean, issmokingallowed),
+		roomnumber = COALESCE(NULLIF($13, 0), roomnumber)
+		where username = $14`
 	_, err := s.DB.ExecContext(ctx, query,
 		password,
 		userInfo.FirstName,
 		userInfo.LastName,
 		userInfo.City,
+		userInfo.State,
 		userInfo.Country,
 		userInfo.Bio,
+		userInfo.IsHost,
+		userInfo.Address,
+		userInfo.IsPetFriendly,
+		userInfo.IsKidFriendly,
+		userInfo.IsSmokingAllowed,
+		userInfo.RoomNumber,
 		username)
 	return err
 }

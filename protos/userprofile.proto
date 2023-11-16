@@ -36,19 +36,16 @@ message editProfileRequest{
     string NewPassword = 3;
     string FirstName = 4;
     string LastName = 5;
-    string BirthDate = 6;
-    string City = 7;
-    string State = 8;
-    string Country = 9;
-    int32 Gender = 10;
-    string Bio = 11;
-    string IsHost = 12;
-    string Address = 13;
-    string PhoneNumber = 14;
-    string IsPetFriendly = 15;
-    string IsKidFriendly = 16;
-    string IsSmokingAllowed = 17;
-    int32 RoomNumber = 18;
+    string City = 6;
+    string State = 7;
+    string Country = 8;
+    string Bio = 9;
+    string IsHost = 10;
+    string Address = 11;
+    string IsPetFriendly = 12;
+    string IsKidFriendly = 13;
+    string IsSmokingAllowed = 14;
+    int32 RoomNumber = 15;
 }
 
 message editProfileResponse{
