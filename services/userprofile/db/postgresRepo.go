@@ -135,3 +135,34 @@ func (s *PostgresRepository) GetUserPassword(username string) (string, error) {
 	}
 	return current_password, nil
 }
+
+func (s *PostgresRepository) GetPublicProfile(username string) (*pb.PublicProfileResponse, int, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
+	defer cancel()
+	user := pb.PublicProfileResponse{}
+	var birth_date, joiningdate time.Time
+	var id int
+	query := `select id ,email, username, firstname, lastname, birthdate, state, country, gender, joiningdate, 
+			COALESCE(NULLIF(bio, NULL), '') as bio,
+			COALESCE(NULLIF(city, NULL), '') as city
+			from members where username = $1`
+	err := s.DB.QueryRowContext(ctx, query, username).Scan(
+		&id,
+		&user.Email,
+		&user.UserName,
+		&user.FirstName,
+		&user.LastName,
+		&birth_date,
+		&user.State,
+		&user.Country,
+		&user.Gender,
+		&joiningdate,
+		&user.Bio,
+		&user.City)
+	if err != nil {
+		return nil, 0, err
+	}
+	user.BirthDate = birth_date.Format("2006-01-02")
+	user.JoiningDate = joiningdate.Format("2006-01-02")
+	return &user, id, nil
+}

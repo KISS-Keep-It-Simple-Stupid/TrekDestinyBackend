@@ -117,3 +117,29 @@ func (s *Repository) UploadImage(ctx context.Context, r *pb.ImageRequest) (*pb.I
 	}
 	return resp, nil
 }
+
+func (s *Repository) PublicProfile(ctx context.Context, r *pb.PublicProfileRequest) (*pb.PublicProfileResponse, error) {
+	_, err := helper.DecodeToken(r.AccessToken)
+	if err != nil {
+		resp := &pb.PublicProfileResponse{
+			Message: "User is UnAuthorized",
+		}
+		return resp, nil
+	}
+
+	resp, id, err := s.DB.GetPublicProfile(r.Username)
+	if err != nil {
+		log.Println(err.Error())
+		err := errors.New("internal error while getting public profile details - userprofile service")
+		return nil, err
+	}
+	resp.Message = "success"
+	resp.Image, err = helper.GetImageURL(s.S3, fmt.Sprintf("user-%d", id))
+	if err != nil {
+		log.Println(err.Error())
+		err := errors.New("internal error while getting image url - userprofile service")
+		return nil, err
+	}
+	return resp, nil
+
+}
