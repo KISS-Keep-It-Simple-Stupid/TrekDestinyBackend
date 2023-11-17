@@ -46,6 +46,7 @@ message editProfileRequest{
     string IsKidFriendly = 13;
     string IsSmokingAllowed = 14;
     int32 RoomNumber = 15;
+    string PhoneNumber = 16;
 }
 
 message editProfileResponse{

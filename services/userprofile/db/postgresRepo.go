@@ -86,8 +86,9 @@ func (s *PostgresRepository) UpdateUserInformation(username string, userInfo *pb
 		ispetfirendly = COALESCE(NULLIF($10, '')::boolean, ispetfirendly),
 		iskidfiendly = COALESCE(NULLIF($11, '')::boolean, iskidfiendly),
 		issmokingallowed = COALESCE(NULLIF($12, '')::boolean, issmokingallowed),
-		roomnumber = COALESCE(NULLIF($13, 0), roomnumber)
-		where username = $14`
+		phonenumber = COALESCE(NULLIF($13, ''), phonenumber),
+		roomnumber = COALESCE(NULLIF($14, 0), roomnumber)
+		where username = $15`
 	_, err := s.DB.ExecContext(ctx, query,
 		password,
 		userInfo.FirstName,
@@ -101,6 +102,7 @@ func (s *PostgresRepository) UpdateUserInformation(username string, userInfo *pb
 		userInfo.IsPetFriendly,
 		userInfo.IsKidFriendly,
 		userInfo.IsSmokingAllowed,
+		userInfo.PhoneNumber,
 		userInfo.RoomNumber,
 		username)
 	return err
