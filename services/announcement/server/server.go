@@ -133,6 +133,19 @@ func (s *Repository) CreateOffer(ctx context.Context, r *pb.CreateOfferRequest) 
 		return resp, nil
 	}
 
+	check, message, err := s.DB.ValidateOffer(int(r.AnnouncementId), claims.UserID)
+	if err != nil {
+		respErr := errors.New("internal server error while validating new offer - announcement service")
+		log.Println(err)
+		return nil, respErr
+	} 
+	if !check {
+		resp := &pb.CreateOfferResponse{
+			Message: message,
+		}
+		return resp, nil
+	}
+
 	err = s.DB.InsertOffer(r, claims.UserID)
 	if err != nil {
 		respErr := errors.New("internal server error while adding new offer - announcement service")
@@ -175,7 +188,14 @@ func (s *Repository) GetOffer(ctx context.Context, r *pb.GetOfferRequest) (*pb.G
 		err := errors.New("internal error while getting offer info - announcement service")
 		return nil, err
 	}
-
+	for _, offer := range resp.Offers {
+		offer.Image, err = helper.GetImageURL(s.S3, fmt.Sprintf("user-%d", offer.HostId))
+		if err != nil {
+			log.Println(err.Error())
+			err := errors.New("internal error while getting user image from object storage - announcement service")
+			return nil, err
+		}
+	}
 	resp.Message = "success"
 	return resp, nil
 }

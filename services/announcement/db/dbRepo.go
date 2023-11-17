@@ -14,4 +14,5 @@ type Repository interface {
 	GetGuestID(announcementID int) (int, error)
 	GetOfferDetails(announcement_id int) (*pb.GetOfferResponse, error)
 	GetProfileAnnouncementDetails(user_id int) (*pb.GetCardProfileResponse, error)
+	ValidateOffer(announcement_id int, user_id int) (bool, string, error)
 }

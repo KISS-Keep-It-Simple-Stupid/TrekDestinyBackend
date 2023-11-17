@@ -271,3 +271,33 @@ func (s *PostgresRepository) GetProfileAnnouncementDetails(user_id int) (*pb.Get
 	}
 	return &resp, nil
 }
+
+func (s *PostgresRepository) ValidateOffer(announcement_id int, user_id int) (bool, string, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
+	defer cancel()
+	var temp_id int
+	query := `select user_id from announcement where id = $1`
+	err := s.DB.QueryRowContext(ctx, query, announcement_id).Scan(&temp_id)
+	if err != nil {
+		return true, "", err
+	}
+	if temp_id == user_id {
+		return false, "you can not offer to your own announcement", nil
+	}
+
+	query = `select host_id from announcement_offer where announcement_id = $1`
+	rows, err := s.DB.QueryContext(ctx, query, announcement_id)
+	if err != nil {
+		return true, "", err
+	}
+	for rows.Next() {
+		err := rows.Scan(&temp_id)
+		if err != nil {
+			return true, "", err
+		}
+		if temp_id == user_id {
+			return false, "you have already offered to this announcement", nil
+		}
+	}
+	return true, "", nil
+}
