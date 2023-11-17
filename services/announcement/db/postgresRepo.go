@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"log"
+	"math"
 	"strings"
 	"time"
 
@@ -30,6 +31,18 @@ func (s *PostgresRepository) GetIdFromUsername(username string) (int, error) {
 		return -1, err
 	}
 	return id, nil
+}
+
+func (s *PostgresRepository) GetUsernameFromId(id int) (string, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
+	defer cancel()
+	var username string
+	query := `select username from members where id = $1`
+	err := s.DB.QueryRowContext(ctx, query, id).Scan(&username)
+	if err != nil {
+		return "", err
+	}
+	return username, nil
 }
 
 func (s *PostgresRepository) InsertAnnouncement(announcementInfo *pb.CreateCardRequest, user_id int) (int, error) {
@@ -140,6 +153,13 @@ func (s *PostgresRepository) GetAnnouncementDetails(filter []string, sort string
 		card.EndDate = enddate.Format("2006-01-02")
 		resp.Cards = append(resp.Cards, &card)
 	}
+	var cardcount int
+	query = `select COUNT(*) from announcement`
+	err = s.DB.QueryRow(query).Scan(&cardcount)
+	if err != nil {
+		return nil, err
+	}
+	resp.PageCount = int32(math.Ceil(float64(cardcount) / float64(pagesize)))
 	return &resp, nil
 }
 

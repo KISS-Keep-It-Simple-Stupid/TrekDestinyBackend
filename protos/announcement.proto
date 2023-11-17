@@ -38,11 +38,14 @@ message CardRecord {
     string DestinationState = 8;
     string DestinationCountry = 9;
     int32 NumberOfTravelers = 10;
+    string Image = 11;
+    string UserUsername = 12;
 }
 
 message getCardResponse {
     repeated CardRecord Cards = 1;
     string Message = 2;
+    int32 PageCount = 3;
 }
 
 message createOfferRequest {

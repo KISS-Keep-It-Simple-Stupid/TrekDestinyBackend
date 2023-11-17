@@ -13,18 +13,21 @@ import (
 	"github.com/KISS-Keep-It-Simple-Stupid/TrekDestinyBackend/services/announcement/models"
 	"github.com/KISS-Keep-It-Simple-Stupid/TrekDestinyBackend/services/announcement/pb"
 	"github.com/KISS-Keep-It-Simple-Stupid/TrekDestinyBackend/services/announcement/queue"
+	"github.com/aws/aws-sdk-go/service/s3"
 )
 
 type Repository struct {
 	pb.UnimplementedAnnouncementServer
 	DB    db.Repository
 	Queue *queue.Queue
+	S3    *s3.S3
 }
 
-func New(db db.Repository, q *queue.Queue) *Repository {
+func New(db db.Repository, q *queue.Queue, s3 *s3.S3) *Repository {
 	return &Repository{
 		DB:    db,
 		Queue: q,
+		S3:    s3,
 	}
 }
 
@@ -103,6 +106,19 @@ func (s *Repository) GetCard(ctx context.Context, r *pb.GetCardRequest) (*pb.Get
 			return nil, respErr
 		}
 		card.PreferredLanguages = languages[:]
+		username, err := s.DB.GetUsernameFromId(int(card.UserId))
+		if err != nil {
+			respErr := errors.New("internal server error while getting username from id - announcement service")
+			log.Println(err)
+			return nil, respErr
+		}
+		card.UserUsername = username
+		card.Image, err = helper.GetImageURL(s.S3, fmt.Sprintf("user-%d", card.UserId))
+		if err != nil {
+			log.Println(err.Error())
+			err := errors.New("internal error while getting user image from object storage - announcement service")
+			return nil, err
+		}
 	}
 	resp.Message = "success"
 	return resp, nil
@@ -138,7 +154,7 @@ func (s *Repository) CreateOffer(ctx context.Context, r *pb.CreateOfferRequest) 
 		}
 		q.Send(&notifMessage)
 	}(claims.UserName, guestID, s.Queue)
-	
+
 	resp := pb.CreateOfferResponse{
 		Message: "success",
 	}
