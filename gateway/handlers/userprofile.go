@@ -3,6 +3,7 @@ package handlers
 import (
 	"context"
 	"encoding/json"
+	"github.com/go-chi/chi/v5"
 	"io"
 	"net/http"
 	"strings"
@@ -104,5 +105,30 @@ func (s *Repository) UploadImage(w http.ResponseWriter, r *http.Request) {
 		helpers.MessageGenerator(w, "image uploaded", http.StatusOK)
 	} else {
 		helpers.MessageGenerator(w, resp.Message, http.StatusBadRequest)
+	}
+}
+
+func (s *Repository) PublicProfile(w http.ResponseWriter, r *http.Request) {
+	reqToken := r.Header.Get("Authorization")
+	splitToken := strings.Split(reqToken, "Jwt ")
+	if len(splitToken) < 2 {
+		helpers.MessageGenerator(w, "User is UnAuthorized", http.StatusUnauthorized)
+		return
+	}
+	reqToken = splitToken[1]
+	username := chi.URLParam(r, "username")
+	profileReq := &userprofile_pb.PublicProfileRequest{
+		AccessToken: reqToken,
+		Username:    username,
+	}
+	resp, err := s.userprofile_client.PublicProfile(context.Background(), profileReq)
+	if err != nil {
+		helpers.MessageGenerator(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	if resp.Message == "success" {
+		helpers.ResponseGenerator(w, resp)
+	} else {
+		helpers.MessageGenerator(w, resp.Message, http.StatusUnauthorized)
 	}
 }

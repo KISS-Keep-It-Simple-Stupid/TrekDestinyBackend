@@ -62,8 +62,31 @@ message ImageResponse {
     string Message = 1;
 }
 
+message publicProfileRequest {
+    string Username = 1;
+    string AccessToken = 2;;
+}
+
+message publicProfileResponse {
+    string Email = 1;
+    string UserName = 2;
+    string FirstName = 3;
+    string LastName = 4;
+    string BirthDate = 5;
+    string City = 6;
+    string State = 7;
+    string Country = 8;
+    int32 Gender = 9;
+    string JoiningDate = 10;
+    string Bio = 11;
+    string Image = 12;
+    string Message = 13;
+
+}
+
 service UserProfile {
     rpc ProfileDetails(profileDetailsRequest) returns (profileDetailsResponse);
     rpc EditProfile(editProfileRequest) returns (editProfileResponse);
     rpc UploadImage (ImageRequest) returns (ImageResponse);
+    rpc PublicProfile(publicProfileRequest) returns (publicProfileResponse); 
 }
