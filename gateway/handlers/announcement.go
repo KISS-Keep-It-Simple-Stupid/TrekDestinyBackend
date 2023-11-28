@@ -171,3 +171,95 @@ func (s *Repository) GetCardProfile(w http.ResponseWriter, r *http.Request) {
 		helpers.MessageGenerator(w, resp.Message, http.StatusBadRequest)
 	}
 }
+
+func (s *Repository) CreatePost(w http.ResponseWriter, r *http.Request) {
+	reqToken := r.Header.Get("Authorization")
+	splitToken := strings.Split(reqToken, "Jwt ")
+	if len(splitToken) < 2 {
+		helpers.MessageGenerator(w, "User is UnAuthorized", http.StatusUnauthorized)
+		return
+	}
+	reqToken = splitToken[1]
+	createpostReq := &announcement_pb.CreatePostRequest{}
+	postData, err := io.ReadAll(r.Body)
+	if err != nil {
+		helpers.MessageGenerator(w, "wrong post body format", http.StatusBadRequest)
+		return
+	}
+	err = json.Unmarshal(postData, createpostReq)
+	if err != nil {
+		helpers.MessageGenerator(w, "wrong post body fields", http.StatusBadRequest)
+		return
+	}
+	createpostReq.AccessToken = reqToken
+	resp, err := s.announcement_client.CreatePost(context.Background(), createpostReq)
+	if err != nil {
+		helpers.MessageGenerator(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	if resp.Message == "success" {
+		helpers.MessageGenerator(w, "post created successfully", http.StatusCreated)
+	} else if resp.Message == "User is UnAuthorized - announcement service" {
+		helpers.MessageGenerator(w, resp.Message, http.StatusUnauthorized)
+	} else {
+		helpers.MessageGenerator(w, resp.Message, http.StatusBadRequest)
+	}
+}
+
+func (s *Repository) GetMyPost(w http.ResponseWriter, r *http.Request) {
+	reqToken := r.Header.Get("Authorization")
+	splitToken := strings.Split(reqToken, "Jwt ")
+	if len(splitToken) < 2 {
+		helpers.MessageGenerator(w, "User is UnAuthorized", http.StatusUnauthorized)
+		return
+	}
+	reqToken = splitToken[1]
+	getmypostReq := &announcement_pb.GetMyPostRequest{}
+	getmypostReq.AccessToken = reqToken
+	resp, err := s.announcement_client.GetMyPost(context.Background(), getmypostReq)
+	if err != nil {
+		helpers.MessageGenerator(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	if resp.Message == "success" {
+		helpers.ResponseGenerator(w, resp)
+	} else if resp.Message == "User is UnAuthorized - announcement service" {
+		helpers.MessageGenerator(w, resp.Message, http.StatusUnauthorized)
+	} else {
+		helpers.MessageGenerator(w, resp.Message, http.StatusBadRequest)
+	}
+}
+
+func (s *Repository) GetPostHost(w http.ResponseWriter, r *http.Request) {
+	reqToken := r.Header.Get("Authorization")
+	splitToken := strings.Split(reqToken, "Jwt ")
+	if len(splitToken) < 2 {
+		helpers.MessageGenerator(w, "User is UnAuthorized", http.StatusUnauthorized)
+		return
+	}
+	reqToken = splitToken[1]
+	getposthostReq := &announcement_pb.GetPostHostRequest{}
+	postData, err := io.ReadAll(r.Body)
+	if err != nil {
+		helpers.MessageGenerator(w, "wrong post body format", http.StatusBadRequest)
+		return
+	}
+	err = json.Unmarshal(postData, getposthostReq)
+	if err != nil {
+		helpers.MessageGenerator(w, "wrong post body fields", http.StatusBadRequest)
+		return
+	}
+	getposthostReq.AccessToken = reqToken
+	resp, err := s.announcement_client.GetPostHost(context.Background(), getposthostReq)
+	if err != nil {
+		helpers.MessageGenerator(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	if resp.Message == "success" {
+		helpers.ResponseGenerator(w, resp)
+	} else if resp.Message == "User is UnAuthorized - announcement service" {
+		helpers.MessageGenerator(w, resp.Message, http.StatusUnauthorized)
+	} else {
+		helpers.MessageGenerator(w, resp.Message, http.StatusBadRequest)
+	}
+}

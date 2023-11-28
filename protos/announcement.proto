@@ -84,10 +84,61 @@ message getCardProfileResponse {
     string Message = 2;
 }
 
+message createPostRequest {
+    string AccessToken = 1;
+    int32 AnnouncementId = 2;
+    string PostTitle = 3;
+    int32 HostRating = 4;
+    string PostBody = 5;
+    bytes ImageData = 6;
+}
+
+message createPostResponse {
+    string Message = 1;
+}
+
+message PostRecord {
+    int32 PostId = 1;
+    int32 AnnouncementId = 2;
+    int32 HostId = 3;
+    string HostUsername = 4;
+    string HostImage = 5;
+    int32 GuestId = 6;
+    string GuestUsername = 7;
+    string GuestImage = 8;
+    string PostTitle = 9;
+    int32 HostRating = 10;
+    string PostBody = 11;
+    string PostImage = 12;
+}
+
+message getMyPostRequest {
+    string AccessToken = 1;
+}
+
+message getMyPostResponse {
+    repeated PostRecord posts = 1;
+    string Message = 2;
+}
+
+message getPostHostRequest {
+    string AccessToken = 1;
+    int32 HostId = 2;
+}
+
+message getPostHostResponse {
+    repeated PostRecord posts = 1;
+    string Message = 2;
+}
+
+
 service Announcement {
     rpc CreateCard(createCardRequest) returns (createCardResponse);
     rpc GetCard(getCardRequest) returns (getCardResponse);
     rpc CreateOffer(createOfferRequest) returns (createOfferResponse);
     rpc GetOffer(getOfferRequest) returns (getOfferResponse);
     rpc GetCardProfile(getCardProfileRequest) returns (getCardProfileResponse);
+    rpc CreatePost(createPostRequest) returns (createPostResponse);
+    rpc GetMyPost(getMyPostRequest) returns (getMyPostResponse);
+    rpc GetPostHost(getPostHostRequest) returns (getPostHostResponse);
 }

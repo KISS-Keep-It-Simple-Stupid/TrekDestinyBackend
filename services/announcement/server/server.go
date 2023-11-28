@@ -1,6 +1,7 @@
 package server
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -13,7 +14,9 @@ import (
 	"github.com/KISS-Keep-It-Simple-Stupid/TrekDestinyBackend/services/announcement/models"
 	"github.com/KISS-Keep-It-Simple-Stupid/TrekDestinyBackend/services/announcement/pb"
 	"github.com/KISS-Keep-It-Simple-Stupid/TrekDestinyBackend/services/announcement/queue"
+	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/spf13/viper"
 )
 
 type Repository struct {
@@ -138,7 +141,7 @@ func (s *Repository) CreateOffer(ctx context.Context, r *pb.CreateOfferRequest) 
 		respErr := errors.New("internal server error while validating new offer - announcement service")
 		log.Println(err)
 		return nil, respErr
-	} 
+	}
 	if !check {
 		resp := &pb.CreateOfferResponse{
 			Message: message,
@@ -222,6 +225,126 @@ func (s *Repository) GetCardProfile(ctx context.Context, r *pb.GetCardProfileReq
 			return nil, respErr
 		}
 		card.PreferredLanguages = languages[:]
+	}
+	resp.Message = "success"
+	return resp, nil
+}
+
+func (s *Repository) CreatePost(ctx context.Context, r *pb.CreatePostRequest) (*pb.CreatePostResponse, error) {
+	_, err := helper.DecodeToken(r.AccessToken)
+	if err != nil {
+		resp := &pb.CreatePostResponse{
+			Message: "User is UnAuthorized - announcement service",
+		}
+		return resp, nil
+	}
+
+	post_id, err := s.DB.InsertPost(r)
+	if err != nil {
+		respErr := errors.New("internal server error while adding new post - announcement service")
+		log.Println(err)
+		return nil, respErr
+	}
+
+	bucketName := viper.Get("OBJECT_STORAGE_BUCKET_NAME").(string)
+	// Upload the image to S3
+	_, err = s.S3.PutObject(&s3.PutObjectInput{
+		Bucket:             aws.String(bucketName),
+		Key:                aws.String(fmt.Sprintf("post-%d", post_id)),
+		ACL:                aws.String("private"), // Set ACL as needed
+		Body:               bytes.NewReader(r.ImageData),
+		ContentLength:      aws.Int64(int64(len(r.ImageData))),
+		ContentType:        aws.String("image/jpeg"), // Set content type based on your file type
+		ContentDisposition: aws.String("attachment"),
+	})
+	if err != nil {
+		log.Println(err.Error())
+		err := errors.New("internal error while uploading post image to object storage - announcement service")
+		return nil, err
+	}
+
+	resp := pb.CreatePostResponse{
+		Message: "success",
+	}
+	return &resp, nil
+}
+
+func (s *Repository) GetMyPost(ctx context.Context, r *pb.GetMyPostRequest) (*pb.GetMyPostResponse, error) {
+	claims, err := helper.DecodeToken(r.AccessToken)
+	if err != nil {
+		resp := &pb.GetMyPostResponse{
+			Message: "User is UnAuthorized - announcement service",
+		}
+		return resp, nil
+	}
+
+	resp, err := s.DB.GetMyPostDetails(claims.UserID)
+	if err != nil {
+		log.Println(err.Error())
+		err := errors.New("internal error while getting post info - announcement service")
+		return nil, err
+	}
+
+	for _, post := range resp.Posts {
+		post.PostImage, err = helper.GetImageURL(s.S3, fmt.Sprintf("post-%d", post.PostId))
+		if err != nil {
+			log.Println(err.Error())
+			err := errors.New("internal error while getting post image from object storage - announcement service")
+			return nil, err
+		}
+		post.GuestImage, err = helper.GetImageURL(s.S3, fmt.Sprintf("user-%d", post.GuestId))
+		if err != nil {
+			log.Println(err.Error())
+			err := errors.New("internal error while getting user image from object storage - announcement service")
+			return nil, err
+		}
+		post.HostImage, err = helper.GetImageURL(s.S3, fmt.Sprintf("post-%d", post.HostId))
+		if err != nil {
+			log.Println(err.Error())
+			err := errors.New("internal error while getting user image from object storage - announcement service")
+			return nil, err
+		}
+	}
+
+	resp.Message = "success"
+	return resp, nil
+}
+
+func (s *Repository) GetPostHost(ctx context.Context, r *pb.GetPostHostRequest) (*pb.GetPostHostResponse, error) {
+	_, err := helper.DecodeToken(r.AccessToken)
+	if err != nil {
+		resp := &pb.GetPostHostResponse{
+			Message: "User is UnAuthorized - announcement service",
+		}
+		return resp, nil
+	}
+
+	resp, err := s.DB.GetPostHostDetails(int(r.HostId))
+	if err != nil {
+		log.Println(err.Error())
+		err := errors.New("internal error while getting post info - announcement service")
+		return nil, err
+	}
+
+	for _, post := range resp.Posts {
+		post.PostImage, err = helper.GetImageURL(s.S3, fmt.Sprintf("post-%d", post.PostId))
+		if err != nil {
+			log.Println(err.Error())
+			err := errors.New("internal error while getting post image from object storage - announcement service")
+			return nil, err
+		}
+		post.GuestImage, err = helper.GetImageURL(s.S3, fmt.Sprintf("user-%d", post.GuestId))
+		if err != nil {
+			log.Println(err.Error())
+			err := errors.New("internal error while getting user image from object storage - announcement service")
+			return nil, err
+		}
+		post.HostImage, err = helper.GetImageURL(s.S3, fmt.Sprintf("post-%d", post.HostId))
+		if err != nil {
+			log.Println(err.Error())
+			err := errors.New("internal error while getting user image from object storage - announcement service")
+			return nil, err
+		}
 	}
 	resp.Message = "success"
 	return resp, nil

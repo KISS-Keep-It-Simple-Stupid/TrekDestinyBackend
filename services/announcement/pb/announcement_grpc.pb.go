@@ -27,6 +27,9 @@ type AnnouncementClient interface {
 	CreateOffer(ctx context.Context, in *CreateOfferRequest, opts ...grpc.CallOption) (*CreateOfferResponse, error)
 	GetOffer(ctx context.Context, in *GetOfferRequest, opts ...grpc.CallOption) (*GetOfferResponse, error)
 	GetCardProfile(ctx context.Context, in *GetCardProfileRequest, opts ...grpc.CallOption) (*GetCardProfileResponse, error)
+	CreatePost(ctx context.Context, in *CreatePostRequest, opts ...grpc.CallOption) (*CreatePostResponse, error)
+	GetMyPost(ctx context.Context, in *GetMyPostRequest, opts ...grpc.CallOption) (*GetMyPostResponse, error)
+	GetPostHost(ctx context.Context, in *GetPostHostRequest, opts ...grpc.CallOption) (*GetPostHostResponse, error)
 }
 
 type announcementClient struct {
@@ -82,6 +85,33 @@ func (c *announcementClient) GetCardProfile(ctx context.Context, in *GetCardProf
 	return out, nil
 }
 
+func (c *announcementClient) CreatePost(ctx context.Context, in *CreatePostRequest, opts ...grpc.CallOption) (*CreatePostResponse, error) {
+	out := new(CreatePostResponse)
+	err := c.cc.Invoke(ctx, "/Announcement/CreatePost", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *announcementClient) GetMyPost(ctx context.Context, in *GetMyPostRequest, opts ...grpc.CallOption) (*GetMyPostResponse, error) {
+	out := new(GetMyPostResponse)
+	err := c.cc.Invoke(ctx, "/Announcement/GetMyPost", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *announcementClient) GetPostHost(ctx context.Context, in *GetPostHostRequest, opts ...grpc.CallOption) (*GetPostHostResponse, error) {
+	out := new(GetPostHostResponse)
+	err := c.cc.Invoke(ctx, "/Announcement/GetPostHost", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // AnnouncementServer is the server API for Announcement service.
 // All implementations must embed UnimplementedAnnouncementServer
 // for forward compatibility
@@ -91,6 +121,9 @@ type AnnouncementServer interface {
 	CreateOffer(context.Context, *CreateOfferRequest) (*CreateOfferResponse, error)
 	GetOffer(context.Context, *GetOfferRequest) (*GetOfferResponse, error)
 	GetCardProfile(context.Context, *GetCardProfileRequest) (*GetCardProfileResponse, error)
+	CreatePost(context.Context, *CreatePostRequest) (*CreatePostResponse, error)
+	GetMyPost(context.Context, *GetMyPostRequest) (*GetMyPostResponse, error)
+	GetPostHost(context.Context, *GetPostHostRequest) (*GetPostHostResponse, error)
 	mustEmbedUnimplementedAnnouncementServer()
 }
 
@@ -112,6 +145,15 @@ func (UnimplementedAnnouncementServer) GetOffer(context.Context, *GetOfferReques
 }
 func (UnimplementedAnnouncementServer) GetCardProfile(context.Context, *GetCardProfileRequest) (*GetCardProfileResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetCardProfile not implemented")
+}
+func (UnimplementedAnnouncementServer) CreatePost(context.Context, *CreatePostRequest) (*CreatePostResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreatePost not implemented")
+}
+func (UnimplementedAnnouncementServer) GetMyPost(context.Context, *GetMyPostRequest) (*GetMyPostResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetMyPost not implemented")
+}
+func (UnimplementedAnnouncementServer) GetPostHost(context.Context, *GetPostHostRequest) (*GetPostHostResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetPostHost not implemented")
 }
 func (UnimplementedAnnouncementServer) mustEmbedUnimplementedAnnouncementServer() {}
 
@@ -216,6 +258,60 @@ func _Announcement_GetCardProfile_Handler(srv interface{}, ctx context.Context, 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Announcement_CreatePost_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreatePostRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AnnouncementServer).CreatePost(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/Announcement/CreatePost",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AnnouncementServer).CreatePost(ctx, req.(*CreatePostRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Announcement_GetMyPost_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetMyPostRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AnnouncementServer).GetMyPost(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/Announcement/GetMyPost",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AnnouncementServer).GetMyPost(ctx, req.(*GetMyPostRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Announcement_GetPostHost_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetPostHostRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AnnouncementServer).GetPostHost(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/Announcement/GetPostHost",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AnnouncementServer).GetPostHost(ctx, req.(*GetPostHostRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Announcement_ServiceDesc is the grpc.ServiceDesc for Announcement service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -242,6 +338,18 @@ var Announcement_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetCardProfile",
 			Handler:    _Announcement_GetCardProfile_Handler,
+		},
+		{
+			MethodName: "CreatePost",
+			Handler:    _Announcement_CreatePost_Handler,
+		},
+		{
+			MethodName: "GetMyPost",
+			Handler:    _Announcement_GetMyPost_Handler,
+		},
+		{
+			MethodName: "GetPostHost",
+			Handler:    _Announcement_GetPostHost_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

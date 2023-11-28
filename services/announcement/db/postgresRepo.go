@@ -301,3 +301,114 @@ func (s *PostgresRepository) ValidateOffer(announcement_id int, user_id int) (bo
 	}
 	return true, "", nil
 }
+
+func (s *PostgresRepository) InsertPost(postInfo *pb.CreatePostRequest) (int, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
+	defer cancel()
+	var host_id int
+	var guest_id int
+	query := `select user_id, main_host from announcement where id = $1`
+	err := s.DB.QueryRowContext(ctx, query, postInfo.AnnouncementId).Scan(&guest_id, &host_id)
+	if err != nil {
+		return -1, err
+	}
+	query = `insert into post (announcement_id, host_id, guest_id, title, rating, body) values ($1, $2, $3, $4, $5, $6)`
+	_, err = s.DB.ExecContext(ctx, query, postInfo.AnnouncementId, host_id, guest_id, postInfo.PostTitle, int(postInfo.HostRating), postInfo.PostBody)
+	if err != nil {
+		return -1, err
+	}
+	var post_id int
+	err = s.DB.QueryRow("select id from post order by id desc limit 1").Scan(&post_id)
+	if err != nil {
+		return -1, err
+	}
+	return post_id, nil
+}
+
+func (s *PostgresRepository) GetMyPostDetails(guest_id int) (*pb.GetMyPostResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
+	defer cancel()
+	resp := pb.GetMyPostResponse{}
+	query := "select id, announcement_id, host_id, guest_id, title, rating, body from post where guest_id = $1"
+	rows, err := s.DB.QueryContext(ctx, query, guest_id)
+	if err != nil {
+		return nil, err
+	}
+	for rows.Next() {
+		post := pb.PostRecord{}
+		var host_id int
+		var guest_id int
+		err := rows.Scan(
+			&post.PostId,
+			&post.AnnouncementId,
+			&host_id,
+			&guest_id,
+			&post.PostTitle,
+			&post.HostRating,
+			&post.PostBody)
+		if err != nil {
+			return nil, err
+		}
+		var host_username string
+		var guest_username string
+		query := "select username from members where id = $1"
+		err = s.DB.QueryRowContext(ctx, query, host_id).Scan(&host_username)
+		if err != nil {
+			return nil, err
+		}
+		err = s.DB.QueryRowContext(ctx, query, guest_id).Scan(&guest_username)
+		if err != nil {
+			return nil, err
+		}
+		post.HostUsername = host_username
+		post.GuestUsername = guest_username
+		post.HostId = int32(host_id)
+		post.GuestId = int32(guest_id)
+		resp.Posts = append(resp.Posts, &post)
+	}
+	return &resp, nil
+}
+
+func (s *PostgresRepository) GetPostHostDetails(host_id int) (*pb.GetPostHostResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
+	defer cancel()
+	resp := pb.GetPostHostResponse{}
+	query := "select id, announcement_id, host_id, guest_id, title, rating, body from post where host_id = $1"
+	rows, err := s.DB.QueryContext(ctx, query, host_id)
+	if err != nil {
+		return nil, err
+	}
+	for rows.Next() {
+		post := pb.PostRecord{}
+		var host_id int
+		var guest_id int
+		err := rows.Scan(
+			&post.PostId,
+			&post.AnnouncementId,
+			&host_id,
+			&guest_id,
+			&post.PostTitle,
+			&post.HostRating,
+			&post.PostBody)
+		if err != nil {
+			return nil, err
+		}
+		var host_username string
+		var guest_username string
+		query := "select username from members where id = $1"
+		err = s.DB.QueryRowContext(ctx, query, host_id).Scan(&host_username)
+		if err != nil {
+			return nil, err
+		}
+		err = s.DB.QueryRowContext(ctx, query, guest_id).Scan(&guest_username)
+		if err != nil {
+			return nil, err
+		}
+		post.HostUsername = host_username
+		post.GuestUsername = guest_username
+		post.HostId = int32(host_id)
+		post.GuestId = int32(guest_id)
+		resp.Posts = append(resp.Posts, &post)
+	}
+	return &resp, nil
+}
