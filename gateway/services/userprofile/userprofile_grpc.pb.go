@@ -26,6 +26,7 @@ type UserProfileClient interface {
 	EditProfile(ctx context.Context, in *EditProfileRequest, opts ...grpc.CallOption) (*EditProfileResponse, error)
 	UploadImage(ctx context.Context, in *ImageRequest, opts ...grpc.CallOption) (*ImageResponse, error)
 	PublicProfile(ctx context.Context, in *PublicProfileRequest, opts ...grpc.CallOption) (*PublicProfileResponse, error)
+	PublicProfileHost(ctx context.Context, in *PublicProfileHostRequest, opts ...grpc.CallOption) (*PublicProfileHostResponse, error)
 }
 
 type userProfileClient struct {
@@ -72,6 +73,15 @@ func (c *userProfileClient) PublicProfile(ctx context.Context, in *PublicProfile
 	return out, nil
 }
 
+func (c *userProfileClient) PublicProfileHost(ctx context.Context, in *PublicProfileHostRequest, opts ...grpc.CallOption) (*PublicProfileHostResponse, error) {
+	out := new(PublicProfileHostResponse)
+	err := c.cc.Invoke(ctx, "/UserProfile/PublicProfileHost", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // UserProfileServer is the server API for UserProfile service.
 // All implementations must embed UnimplementedUserProfileServer
 // for forward compatibility
@@ -80,6 +90,7 @@ type UserProfileServer interface {
 	EditProfile(context.Context, *EditProfileRequest) (*EditProfileResponse, error)
 	UploadImage(context.Context, *ImageRequest) (*ImageResponse, error)
 	PublicProfile(context.Context, *PublicProfileRequest) (*PublicProfileResponse, error)
+	PublicProfileHost(context.Context, *PublicProfileHostRequest) (*PublicProfileHostResponse, error)
 	mustEmbedUnimplementedUserProfileServer()
 }
 
@@ -98,6 +109,9 @@ func (UnimplementedUserProfileServer) UploadImage(context.Context, *ImageRequest
 }
 func (UnimplementedUserProfileServer) PublicProfile(context.Context, *PublicProfileRequest) (*PublicProfileResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method PublicProfile not implemented")
+}
+func (UnimplementedUserProfileServer) PublicProfileHost(context.Context, *PublicProfileHostRequest) (*PublicProfileHostResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method PublicProfileHost not implemented")
 }
 func (UnimplementedUserProfileServer) mustEmbedUnimplementedUserProfileServer() {}
 
@@ -184,6 +198,24 @@ func _UserProfile_PublicProfile_Handler(srv interface{}, ctx context.Context, de
 	return interceptor(ctx, in, info, handler)
 }
 
+func _UserProfile_PublicProfileHost_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(PublicProfileHostRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserProfileServer).PublicProfileHost(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/UserProfile/PublicProfileHost",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserProfileServer).PublicProfileHost(ctx, req.(*PublicProfileHostRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // UserProfile_ServiceDesc is the grpc.ServiceDesc for UserProfile service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -206,6 +238,10 @@ var UserProfile_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "PublicProfile",
 			Handler:    _UserProfile_PublicProfile_Handler,
+		},
+		{
+			MethodName: "PublicProfileHost",
+			Handler:    _UserProfile_PublicProfileHost_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

@@ -143,3 +143,35 @@ func (s *Repository) PublicProfile(ctx context.Context, r *pb.PublicProfileReque
 	return resp, nil
 
 }
+
+func (s *Repository) PublicProfileHost(ctx context.Context, r *pb.PublicProfileHostRequest) (*pb.PublicProfileHostResponse, error) {
+	claims, err := helper.DecodeToken(r.AccessToken)
+	if err != nil {
+		resp := &pb.PublicProfileHostResponse{
+			Message: "User is UnAuthorized",
+		}
+		return resp, nil
+	}
+	resp, message, err := s.DB.GetPublicProfileHost(claims.UserID, r.Username)
+	if err != nil {
+		log.Println(err.Error())
+		err := errors.New("internal error while getting public profile host details - userprofile service")
+		return nil, err
+	}
+	if message != "" {
+		resp.Message = message
+		return resp, nil
+	}
+	user_id, err := s.DB.GetIdFromUsername(resp.UserName)
+	if err != nil {
+		return nil, err
+	}
+	resp.Image, err = helper.GetImageURL(s.S3, fmt.Sprintf("user-%d", user_id))
+	if err != nil {
+		log.Println(err.Error())
+		err := errors.New("internal error while getting user image from object storage - userprofile service")
+		return nil, err
+	}
+	resp.Message = "success"
+	return resp, nil
+}

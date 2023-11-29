@@ -132,3 +132,37 @@ func (s *Repository) PublicProfile(w http.ResponseWriter, r *http.Request) {
 		helpers.MessageGenerator(w, resp.Message, http.StatusUnauthorized)
 	}
 }
+
+func (s *Repository) PublicProfileHost(w http.ResponseWriter, r *http.Request) {
+	reqToken := r.Header.Get("Authorization")
+	splitToken := strings.Split(reqToken, "Jwt ")
+	if len(splitToken) < 2 {
+		helpers.MessageGenerator(w, "User is UnAuthorized", http.StatusUnauthorized)
+		return
+	}
+	reqToken = splitToken[1]
+	publicprofilehostReq := &userprofile_pb.PublicProfileHostRequest{}
+	postData, err := io.ReadAll(r.Body)
+	if err != nil {
+		helpers.MessageGenerator(w, "wrong post body format", http.StatusBadRequest)
+		return
+	}
+	err = json.Unmarshal(postData, publicprofilehostReq)
+	if err != nil {
+		helpers.MessageGenerator(w, "wrong post body fields", http.StatusBadRequest)
+		return
+	}
+	publicprofilehostReq.AccessToken = reqToken
+	resp, err := s.userprofile_client.PublicProfileHost(context.Background(), publicprofilehostReq)
+	if err != nil {
+		helpers.MessageGenerator(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	if resp.Message == "success" {
+		helpers.ResponseGenerator(w, resp)
+	} else if resp.Message == "you can't view this profile because the user hasn't offered to any of your announcements" {
+		helpers.MessageGenerator(w, resp.Message, http.StatusBadRequest)
+	} else {
+		helpers.MessageGenerator(w, resp.Message, http.StatusUnauthorized)
+	}
+}

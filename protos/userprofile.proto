@@ -81,12 +81,41 @@ message publicProfileResponse {
     string Bio = 11;
     string Image = 12;
     string Message = 13;
+}
 
+
+message publicProfileHostRequest{
+    string AccessToken = 1;
+    string Username = 2;
+}
+
+message publicProfileHostResponse {
+    string Email = 1;
+    string UserName = 2;
+    string FirstName = 3;
+    string LastName = 4;
+    string BirthDate = 5;
+    string City = 6;
+    string State = 7;
+    string Country = 8;
+    int32 Gender = 9;
+    string JoiningDate = 10;
+    string Bio = 11;
+    string IsHost = 12;
+    string Address = 13;
+    string PhoneNumber = 14;
+    string IsPetFriendly = 15;
+    string IsKidFriendly = 16;
+    string IsSmokingAllowed = 17;
+    int32 RoomNumber = 18;
+    string image = 19;
+    string Message = 20;
 }
 
 service UserProfile {
     rpc ProfileDetails(profileDetailsRequest) returns (profileDetailsResponse);
     rpc EditProfile(editProfileRequest) returns (editProfileResponse);
     rpc UploadImage (ImageRequest) returns (ImageResponse);
-    rpc PublicProfile(publicProfileRequest) returns (publicProfileResponse); 
+    rpc PublicProfile(publicProfileRequest) returns (publicProfileResponse);
+    rpc PublicProfileHost(publicProfileHostRequest) returns (publicProfileHostResponse);
 }

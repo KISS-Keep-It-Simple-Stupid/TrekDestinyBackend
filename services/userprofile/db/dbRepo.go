@@ -8,4 +8,6 @@ type Repository interface {
 	CheckUserExistance(userUserName string) (bool, error)
 	GetUserPassword(username string) (string, error)
 	GetPublicProfile(username string) (*pb.PublicProfileResponse, int, error)
+	GetPublicProfileHost(guest_id int, host_username string) (*pb.PublicProfileHostResponse, string, error)
+	GetIdFromUsername(username string) (int, error)
 }
