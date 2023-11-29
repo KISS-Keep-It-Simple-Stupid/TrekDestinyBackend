@@ -349,3 +349,47 @@ func (s *Repository) GetPostHost(ctx context.Context, r *pb.GetPostHostRequest) 
 	resp.Message = "success"
 	return resp, nil
 }
+
+func (s *Repository) AcceptOffer(ctx context.Context, r *pb.AcceptOfferRequest) (*pb.AcceptOfferResponse, error) {
+	_, err := helper.DecodeToken(r.AccessToken)
+	if err != nil {
+		resp := &pb.AcceptOfferResponse{
+			Message: "User is UnAuthorized - announcement service",
+		}
+		return resp, nil
+	}
+
+	err = s.DB.AcceptUserAsHost(r)
+	if err != nil {
+		respErr := errors.New("internal server error while accepting offer - announcement service")
+		log.Println(err)
+		return nil, respErr
+	}
+
+	resp := pb.AcceptOfferResponse{
+		Message: "success",
+	}
+	return &resp, nil
+}
+
+func (s *Repository) RejectOffer(ctx context.Context, r *pb.RejectOfferRequest) (*pb.RejectOfferResponse, error) {
+	_, err := helper.DecodeToken(r.AccessToken)
+	if err != nil {
+		resp := &pb.RejectOfferResponse{
+			Message: "User is UnAuthorized - announcement service",
+		}
+		return resp, nil
+	}
+
+	err = s.DB.RejectUserAsHost(r)
+	if err != nil {
+		respErr := errors.New("internal server error while rejecting offer - announcement service")
+		log.Println(err)
+		return nil, respErr
+	}
+
+	resp := pb.RejectOfferResponse{
+		Message: "success",
+	}
+	return &resp, nil
+}

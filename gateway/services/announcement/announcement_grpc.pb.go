@@ -30,6 +30,8 @@ type AnnouncementClient interface {
 	CreatePost(ctx context.Context, in *CreatePostRequest, opts ...grpc.CallOption) (*CreatePostResponse, error)
 	GetMyPost(ctx context.Context, in *GetMyPostRequest, opts ...grpc.CallOption) (*GetMyPostResponse, error)
 	GetPostHost(ctx context.Context, in *GetPostHostRequest, opts ...grpc.CallOption) (*GetPostHostResponse, error)
+	AcceptOffer(ctx context.Context, in *AcceptOfferRequest, opts ...grpc.CallOption) (*AcceptOfferResponse, error)
+	RejectOffer(ctx context.Context, in *RejectOfferRequest, opts ...grpc.CallOption) (*RejectOfferResponse, error)
 }
 
 type announcementClient struct {
@@ -112,6 +114,24 @@ func (c *announcementClient) GetPostHost(ctx context.Context, in *GetPostHostReq
 	return out, nil
 }
 
+func (c *announcementClient) AcceptOffer(ctx context.Context, in *AcceptOfferRequest, opts ...grpc.CallOption) (*AcceptOfferResponse, error) {
+	out := new(AcceptOfferResponse)
+	err := c.cc.Invoke(ctx, "/Announcement/AcceptOffer", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *announcementClient) RejectOffer(ctx context.Context, in *RejectOfferRequest, opts ...grpc.CallOption) (*RejectOfferResponse, error) {
+	out := new(RejectOfferResponse)
+	err := c.cc.Invoke(ctx, "/Announcement/RejectOffer", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // AnnouncementServer is the server API for Announcement service.
 // All implementations must embed UnimplementedAnnouncementServer
 // for forward compatibility
@@ -124,6 +144,8 @@ type AnnouncementServer interface {
 	CreatePost(context.Context, *CreatePostRequest) (*CreatePostResponse, error)
 	GetMyPost(context.Context, *GetMyPostRequest) (*GetMyPostResponse, error)
 	GetPostHost(context.Context, *GetPostHostRequest) (*GetPostHostResponse, error)
+	AcceptOffer(context.Context, *AcceptOfferRequest) (*AcceptOfferResponse, error)
+	RejectOffer(context.Context, *RejectOfferRequest) (*RejectOfferResponse, error)
 	mustEmbedUnimplementedAnnouncementServer()
 }
 
@@ -154,6 +176,12 @@ func (UnimplementedAnnouncementServer) GetMyPost(context.Context, *GetMyPostRequ
 }
 func (UnimplementedAnnouncementServer) GetPostHost(context.Context, *GetPostHostRequest) (*GetPostHostResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetPostHost not implemented")
+}
+func (UnimplementedAnnouncementServer) AcceptOffer(context.Context, *AcceptOfferRequest) (*AcceptOfferResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AcceptOffer not implemented")
+}
+func (UnimplementedAnnouncementServer) RejectOffer(context.Context, *RejectOfferRequest) (*RejectOfferResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RejectOffer not implemented")
 }
 func (UnimplementedAnnouncementServer) mustEmbedUnimplementedAnnouncementServer() {}
 
@@ -312,6 +340,42 @@ func _Announcement_GetPostHost_Handler(srv interface{}, ctx context.Context, dec
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Announcement_AcceptOffer_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AcceptOfferRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AnnouncementServer).AcceptOffer(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/Announcement/AcceptOffer",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AnnouncementServer).AcceptOffer(ctx, req.(*AcceptOfferRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Announcement_RejectOffer_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RejectOfferRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AnnouncementServer).RejectOffer(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/Announcement/RejectOffer",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AnnouncementServer).RejectOffer(ctx, req.(*RejectOfferRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Announcement_ServiceDesc is the grpc.ServiceDesc for Announcement service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -350,6 +414,14 @@ var Announcement_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetPostHost",
 			Handler:    _Announcement_GetPostHost_Handler,
+		},
+		{
+			MethodName: "AcceptOffer",
+			Handler:    _Announcement_AcceptOffer_Handler,
+		},
+		{
+			MethodName: "RejectOffer",
+			Handler:    _Announcement_RejectOffer_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

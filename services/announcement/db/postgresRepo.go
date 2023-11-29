@@ -412,3 +412,25 @@ func (s *PostgresRepository) GetPostHostDetails(host_id int) (*pb.GetPostHostRes
 	}
 	return &resp, nil
 }
+
+func (s *PostgresRepository) AcceptUserAsHost(offerInfo *pb.AcceptOfferRequest) (error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
+	defer cancel()
+	query := `update announcement set main_host = $1, status = 'Accepted' where id = $2`
+	_, err := s.DB.ExecContext(ctx, query, offerInfo.HostId, offerInfo.AnnouncementId)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *PostgresRepository) RejectUserAsHost(offerInfo *pb.RejectOfferRequest) (error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
+	defer cancel()
+	query := `delete from announcement_offer where announcement_id = $1 and host_id = $2`
+	_, err := s.DB.ExecContext(ctx, query, offerInfo.AnnouncementId, offerInfo.HostId)
+	if err != nil {
+		return err
+	}
+	return nil
+}

@@ -131,6 +131,26 @@ message getPostHostResponse {
     string Message = 2;
 }
 
+message acceptOfferRequest {
+    string AccessToken = 1;
+    int32 AnnouncementId = 2;
+    int32 HostId = 3;
+}
+
+message acceptOfferResponse {
+    string Message = 1;
+}
+
+message rejectOfferRequest {
+    string AccessToken = 1;
+    int32 AnnouncementId = 2;
+    int32 HostId = 3;
+}
+
+message rejectOfferResponse {
+    string Message = 1;
+}
+
 
 service Announcement {
     rpc CreateCard(createCardRequest) returns (createCardResponse);
@@ -141,4 +161,6 @@ service Announcement {
     rpc CreatePost(createPostRequest) returns (createPostResponse);
     rpc GetMyPost(getMyPostRequest) returns (getMyPostResponse);
     rpc GetPostHost(getPostHostRequest) returns (getPostHostResponse);
+    rpc AcceptOffer(acceptOfferRequest) returns (acceptOfferResponse);
+    rpc RejectOffer(rejectOfferRequest) returns (rejectOfferResponse);
 }

@@ -263,3 +263,71 @@ func (s *Repository) GetPostHost(w http.ResponseWriter, r *http.Request) {
 		helpers.MessageGenerator(w, resp.Message, http.StatusBadRequest)
 	}
 }
+
+func (s *Repository) AcceptOffer(w http.ResponseWriter, r *http.Request) {
+	reqToken := r.Header.Get("Authorization")
+	splitToken := strings.Split(reqToken, "Jwt ")
+	if len(splitToken) < 2 {
+		helpers.MessageGenerator(w, "User is UnAuthorized", http.StatusUnauthorized)
+		return
+	}
+	reqToken = splitToken[1]
+	acceptofferReq := &announcement_pb.AcceptOfferRequest{}
+	postData, err := io.ReadAll(r.Body)
+	if err != nil {
+		helpers.MessageGenerator(w, "wrong post body format", http.StatusBadRequest)
+		return
+	}
+	err = json.Unmarshal(postData, acceptofferReq)
+	if err != nil {
+		helpers.MessageGenerator(w, "wrong post body fields", http.StatusBadRequest)
+		return
+	}
+	acceptofferReq.AccessToken = reqToken
+	resp, err := s.announcement_client.AcceptOffer(context.Background(), acceptofferReq)
+	if err != nil {
+		helpers.MessageGenerator(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	if resp.Message == "success" {
+		helpers.ResponseGenerator(w, resp)
+	} else if resp.Message == "User is UnAuthorized - announcement service" {
+		helpers.MessageGenerator(w, resp.Message, http.StatusUnauthorized)
+	} else {
+		helpers.MessageGenerator(w, resp.Message, http.StatusBadRequest)
+	}
+}
+
+func (s *Repository) RejectOffer(w http.ResponseWriter, r *http.Request) {
+	reqToken := r.Header.Get("Authorization")
+	splitToken := strings.Split(reqToken, "Jwt ")
+	if len(splitToken) < 2 {
+		helpers.MessageGenerator(w, "User is UnAuthorized", http.StatusUnauthorized)
+		return
+	}
+	reqToken = splitToken[1]
+	rejectofferReq := &announcement_pb.RejectOfferRequest{}
+	postData, err := io.ReadAll(r.Body)
+	if err != nil {
+		helpers.MessageGenerator(w, "wrong post body format", http.StatusBadRequest)
+		return
+	}
+	err = json.Unmarshal(postData, rejectofferReq)
+	if err != nil {
+		helpers.MessageGenerator(w, "wrong post body fields", http.StatusBadRequest)
+		return
+	}
+	rejectofferReq.AccessToken = reqToken
+	resp, err := s.announcement_client.RejectOffer(context.Background(), rejectofferReq)
+	if err != nil {
+		helpers.MessageGenerator(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	if resp.Message == "success" {
+		helpers.ResponseGenerator(w, resp)
+	} else if resp.Message == "User is UnAuthorized - announcement service" {
+		helpers.MessageGenerator(w, resp.Message, http.StatusUnauthorized)
+	} else {
+		helpers.MessageGenerator(w, resp.Message, http.StatusBadRequest)
+	}
+}
