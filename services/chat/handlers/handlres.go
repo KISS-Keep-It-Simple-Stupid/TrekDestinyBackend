@@ -3,8 +3,10 @@ package handlers
 import (
 	"log"
 	"net/http"
+	"strconv"
 
 	"github.com/KISS-Keep-It-Simple-Stupid/TrekDestinyBackend/services/chat/db"
+	"github.com/KISS-Keep-It-Simple-Stupid/TrekDestinyBackend/services/chat/helper"
 	"github.com/KISS-Keep-It-Simple-Stupid/TrekDestinyBackend/services/chat/models"
 	"github.com/KISS-Keep-It-Simple-Stupid/TrekDestinyBackend/services/chat/socket/client"
 	"github.com/go-chi/chi/v5"
@@ -43,4 +45,49 @@ func (repo *Repository) Chat(w http.ResponseWriter, r *http.Request) {
 
 	go client.Write(user)
 	go client.Read(user, repo.DB)
+}
+
+func (repo *Repository) Count(w http.ResponseWriter, r *http.Request) {
+	id1 := chi.URLParam(r, "id1")
+	id2 := chi.URLParam(r, "id2")
+	chatID := id1 + "-" + id2
+	count := repo.DB.GetCount(chatID)
+	helper.ResponseGenerator(w, struct {
+		Count int `json:"count"`
+	}{
+		Count: count,
+	})
+}
+
+func (repo *Repository) History(w http.ResponseWriter, r *http.Request) {
+	id1 := chi.URLParam(r, "id1")
+	id2 := chi.URLParam(r, "id2")
+	chatID := id1 + "-" + id2
+	pg := r.URL.Query().Get("page")
+	page := 1
+	var err error
+	if pg != "" {
+		page, err = strconv.Atoi(pg)
+		if err != nil {
+			helper.MessageGenerator(w, "page type must be integer", http.StatusBadRequest)
+			return
+		}
+	}
+	countInQuery := r.URL.Query().Get("count")
+	count := 0
+	if countInQuery != "" {
+		count, err = strconv.Atoi(countInQuery)
+		if err != nil {
+			helper.MessageGenerator(w, "count type must be integer", http.StatusBadRequest)
+			return
+		}
+	}
+	response, err := repo.DB.GetHistory(chatID, page, count)
+	if err != nil {
+		log.Println(err)
+		helper.MessageGenerator(w, "internal error while getting chat history - chat service", http.StatusInternalServerError)
+		return
+	}
+
+	helper.ResponseGenerator(w, response)
 }

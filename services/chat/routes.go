@@ -10,5 +10,7 @@ import (
 func GetRoutes(handler *handlers.Repository) http.Handler {
 	mux := chi.NewRouter()
 	mux.Get("/{id1}/{id2}", handler.Chat)
+	mux.Get("/count/{id1}/{id2}", handler.Count)
+	mux.Get("/history/{id1}/{id2}", handler.History)
 	return mux
 }

@@ -25,3 +25,10 @@ type Hub struct {
 	Connect    chan *Client
 	Disconnect chan *Client
 }
+
+type ChatMessage struct {
+	UserID   int    `json:"user_id`
+	Message  string `json:"message"`
+	Time     string `json:"time"`
+	UserName string `json:"username"`
+}
