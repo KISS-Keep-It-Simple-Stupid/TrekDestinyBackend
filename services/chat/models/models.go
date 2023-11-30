@@ -27,7 +27,7 @@ type Hub struct {
 }
 
 type ChatMessage struct {
-	UserID   int    `json:"user_id`
+	UserID   int    `json:"user_id"`
 	Message  string `json:"message"`
 	Time     string `json:"time"`
 	UserName string `json:"username"`
