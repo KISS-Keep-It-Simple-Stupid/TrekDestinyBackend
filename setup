@@ -14,4 +14,7 @@ if [[ $arg == "proto" ]]; then
     else
         protoc --proto_path=protos protos/$protofile --go_out=services/$service --go-grpc_out=services/$service
     fi
+elif [[ $arg == "test" ]]; then
+  cd services/$2
+  go test -coverprofile=coverage.out ./... && go tool cover -html=coverage.out
 fi
