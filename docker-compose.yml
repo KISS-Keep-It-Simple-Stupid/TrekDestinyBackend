@@ -7,8 +7,8 @@ services:
     restart: on-failure
     depends_on:
       - authentication
-    # ports:
-    #   - 9090:9090
+    ports:
+      - 9090:9090
     networks:
       - trekdestiny
     volumes:
@@ -65,8 +65,8 @@ services:
       - type: bind
         source: ./services/notification
         target: /app
-    # ports:
-    #   - 9091:8083
+    ports:
+      - 9091:8083
   rabbit:
     image: rabbitmq:3-management-alpine
     container_name: rabbit
@@ -116,16 +116,17 @@ services:
     restart: on-failure
     networks:
       - trekdestiny
-    # ports:
-    #   - 9092:8084
-  webserver:
-    build: ./nginx
-    container_name: nginx-back
-    restart: on-failure
-    networks:
-      - trekdestiny
     ports:
-      - 8080:443
+      - 9092:8084
+  # webserver:
+  #   build: ./nginx
+  #   container_name: nginx-back
+  #   restart: on-failure
+  #   networks:
+  #     - trekdestiny
+  #   ports:
+  #     - 8080:443
+  #     - 8081:80
 volumes:
   trekdestinyData:
   trekdestinyData_chat:
