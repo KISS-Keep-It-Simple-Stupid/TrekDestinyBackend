@@ -20,5 +20,6 @@ func getRoutes(handler *handlers.Repository) http.Handler {
 	}))
 	mux.Get("/{id}", handler.Subscribe)
 	mux.Get("/notif", handler.GetNotif)
+	mux.Delete("/notif", handler.DeleteNotif)
 	return mux
 }

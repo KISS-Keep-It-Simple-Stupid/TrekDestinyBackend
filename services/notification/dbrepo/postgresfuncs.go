@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"log"
 	"time"
 
 	"github.com/KISS-Keep-It-Simple-Stupid/TrekDestinyBackend/services/notification/models"
@@ -60,4 +61,15 @@ func (s *postgresRepo) GetNotificationByID(userid int) ([]*models.NotifResponse,
 	}
 
 	return notifs, nil
+}
+
+func (s *postgresRepo) DeleteNotification(notfiID int) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
+	defer cancel()
+	query := `delete from notifications where id = $1`
+	_, err := s.db.ExecContext(ctx, query, notfiID)
+	if err != nil {
+		log.Println(err)
+	}
+	return err
 }

@@ -10,6 +10,10 @@ type NotifMessage struct {
 	Message string `json:"message"`
 }
 
+type DeleteNotifMessage struct {
+	NotifID int `json:"id"`
+}
+
 type NotifResponse struct {
 	ID      int    `json:"id"`
 	Message string `json:"message"`
