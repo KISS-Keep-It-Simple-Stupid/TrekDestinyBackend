@@ -481,8 +481,13 @@ func (s *PostgresRepository) UpdateAnnouncementInformation(announcementInfo *pb.
 func (s *PostgresRepository) DeleteAnnouncement(announcement_id int) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
 	defer cancel()
-	query := `delete from announcement where id = $1`
+	query := `delete from announcement_offer where announcement_id = $1`
 	_, err := s.DB.ExecContext(ctx, query, announcement_id)
+	if err != nil {
+		return err
+	}
+	query = `delete from announcement where id = $1`
+	_, err = s.DB.ExecContext(ctx, query, announcement_id)
 	return err
 }
 
