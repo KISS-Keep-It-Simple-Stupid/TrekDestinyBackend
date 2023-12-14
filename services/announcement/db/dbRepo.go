@@ -21,4 +21,5 @@ type Repository interface {
 	GetPostHostDetails(host_id int) (*pb.GetPostHostResponse, error)
 	AcceptUserAsHost(offerInfo *pb.AcceptOfferRequest) (error)
 	RejectUserAsHost(offerInfo *pb.RejectOfferRequest) (error)
+	UpdateAnnouncementInformation(announcementInfo *pb.EditAnnouncementRequest) error
 }

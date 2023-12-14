@@ -412,3 +412,42 @@ func (s *Repository) RejectOffer(ctx context.Context, r *pb.RejectOfferRequest) 
 	}
 	return &resp, nil
 }
+
+func (s *Repository) EditAnnouncement(ctx context.Context, r *pb.EditAnnouncementRequest) (*pb.EditAnnouncementResponse, error) {
+	claims, err := helper.DecodeToken(r.AccessToken)
+	if err != nil {
+		resp := &pb.EditAnnouncementResponse{
+			Message: "User is UnAuthorized",
+		}
+		return resp, nil
+	}
+	check, err := s.DB.CheckAnnouncementTimeValidation(r.StartDate, r.EndDate, claims.UserID)
+	if err != nil {
+		respErr := errors.New("internal server error while checking announcement existance - announcement service")
+		log.Println(err)
+		return nil, respErr
+	}
+	if !check {
+		resp := pb.EditAnnouncementResponse{
+			Message: "you already have created an announcement in this time range",
+		}
+		return &resp, nil
+	}
+	err = s.DB.UpdateAnnouncementInformation(r)
+	if err != nil {
+		log.Println(err.Error())
+		err := errors.New("internal error while updating announcement info - announcement service")
+		return nil, err
+	}
+	for _, lang := range r.PreferredLanguages {
+		err := s.DB.InsertAnnouncementLanguage(int(r.CardId), lang)
+		if err != nil {
+			respErr := errors.New("internal server error while adding new announcement language - announcement service")
+			return nil, respErr
+		}
+	}
+	resp := &pb.EditAnnouncementResponse{
+		Message: "success",
+	}
+	return resp, nil
+}

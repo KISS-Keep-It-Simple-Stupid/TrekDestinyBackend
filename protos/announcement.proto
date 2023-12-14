@@ -159,6 +159,23 @@ message rejectOfferResponse {
     string Message = 1;
 }
 
+message editAnnouncementRequest {
+    string AccessToken = 1;
+    int32 CardId = 2;
+    string Description = 3;
+    repeated string PreferredLanguages = 4;
+    string StartDate = 5;
+    string EndDate = 6;
+    string DestinationCity = 7;
+    string DestinationState = 8;
+    string DestinationCountry = 9;
+    int32 NumberOfTravelers = 10;
+}
+
+message editAnnouncementResponse {
+    string Message = 1;
+}
+
 
 service Announcement {
     rpc CreateCard(createCardRequest) returns (createCardResponse);
@@ -172,4 +189,5 @@ service Announcement {
     rpc AcceptOffer(acceptOfferRequest) returns (acceptOfferResponse);
     rpc RejectOffer(rejectOfferRequest) returns (rejectOfferResponse);
     rpc UploadPostImage(postImageRequest) returns (postImageResponse);
+    rpc EditAnnouncement(editAnnouncementRequest) returns (editAnnouncementResponse);
 }

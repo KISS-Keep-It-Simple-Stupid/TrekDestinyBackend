@@ -440,3 +440,40 @@ func (s *PostgresRepository) RejectUserAsHost(offerInfo *pb.RejectOfferRequest) 
 	}
 	return nil
 }
+
+func (s *PostgresRepository) UpdateAnnouncementInformation(announcementInfo *pb.EditAnnouncementRequest) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
+	defer cancel()
+	startdate, err := time.Parse("2006-01-02", announcementInfo.StartDate)
+	if err != nil {
+		return err
+	}
+	enddate, err := time.Parse("2006-01-02", announcementInfo.EndDate)
+	if err != nil {
+		return err
+	}
+	query := `update announcement set  
+		description = COALESCE(NULLIF($1, ''), description),
+		startdate = $2,
+		enddate = $3,
+		city = COALESCE(NULLIF($4, ''), city),
+		state = COALESCE(NULLIF($5, ''), state),
+		country = COALESCE(NULLIF($6, ''), country),
+		numberoftravelers = COALESCE(NULLIF($7, 0), numberoftravelers)
+		where id = $8`
+	_, err = s.DB.ExecContext(ctx, query,
+		announcementInfo.Description,
+		startdate,
+		enddate,
+		announcementInfo.DestinationCity,
+		announcementInfo.DestinationState,
+		announcementInfo.DestinationCountry,
+		announcementInfo.NumberOfTravelers,
+		announcementInfo.CardId)
+	if err != nil {
+		return err
+	}
+	query = `delete from announcement_language where announcement_id = $1`
+	_, err = s.DB.ExecContext(ctx, query, announcementInfo.CardId)
+	return err
+}
