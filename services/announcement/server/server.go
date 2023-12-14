@@ -239,13 +239,33 @@ func (s *Repository) CreatePost(ctx context.Context, r *pb.CreatePostRequest) (*
 		return resp, nil
 	}
 
-	post_id, err := s.DB.InsertPost(r)
+	err = s.DB.InsertPost(r)
 	if err != nil {
 		respErr := errors.New("internal server error while adding new post - announcement service")
 		log.Println(err)
 		return nil, respErr
 	}
 
+	resp := pb.CreatePostResponse{
+		Message: "success",
+	}
+	return &resp, nil
+}
+
+func (s *Repository) UploadPostImage(ctx context.Context, r *pb.PostImageRequest) (*pb.PostImageResponse, error) {
+	_, err := helper.DecodeToken(r.AccessToken)
+	if err != nil {
+		resp := &pb.PostImageResponse{
+			Message: "User is UnAuthorized - announcement service",
+		}
+		return resp, nil
+	}
+	// Get last post id
+	post_id, err := s.DB.GetLastPostId()
+	if err != nil {
+		respErr := errors.New("internal server error while getting last post id - announcement service")
+		return nil, respErr
+	}
 	bucketName := viper.Get("OBJECT_STORAGE_BUCKET_NAME").(string)
 	// Upload the image to S3
 	_, err = s.S3.PutObject(&s3.PutObjectInput{
@@ -259,14 +279,13 @@ func (s *Repository) CreatePost(ctx context.Context, r *pb.CreatePostRequest) (*
 	})
 	if err != nil {
 		log.Println(err.Error())
-		err := errors.New("internal error while uploading post image to object storage - announcement service")
+		err := errors.New("internal error while uploading image to object storage - announcement service")
 		return nil, err
 	}
-
-	resp := pb.CreatePostResponse{
+	resp := &pb.PostImageResponse{
 		Message: "success",
 	}
-	return &resp, nil
+	return resp, nil
 }
 
 func (s *Repository) GetMyPost(ctx context.Context, r *pb.GetMyPostRequest) (*pb.GetMyPostResponse, error) {
@@ -392,4 +411,43 @@ func (s *Repository) RejectOffer(ctx context.Context, r *pb.RejectOfferRequest) 
 		Message: "success",
 	}
 	return &resp, nil
+}
+
+func (s *Repository) EditAnnouncement(ctx context.Context, r *pb.EditAnnouncementRequest) (*pb.EditAnnouncementResponse, error) {
+	claims, err := helper.DecodeToken(r.AccessToken)
+	if err != nil {
+		resp := &pb.EditAnnouncementResponse{
+			Message: "User is UnAuthorized",
+		}
+		return resp, nil
+	}
+	check, err := s.DB.CheckAnnouncementTimeValidation(r.StartDate, r.EndDate, claims.UserID)
+	if err != nil {
+		respErr := errors.New("internal server error while checking announcement existance - announcement service")
+		log.Println(err)
+		return nil, respErr
+	}
+	if !check {
+		resp := pb.EditAnnouncementResponse{
+			Message: "you already have created an announcement in this time range",
+		}
+		return &resp, nil
+	}
+	err = s.DB.UpdateAnnouncementInformation(r)
+	if err != nil {
+		log.Println(err.Error())
+		err := errors.New("internal error while updating announcement info - announcement service")
+		return nil, err
+	}
+	for _, lang := range r.PreferredLanguages {
+		err := s.DB.InsertAnnouncementLanguage(int(r.CardId), lang)
+		if err != nil {
+			respErr := errors.New("internal server error while adding new announcement language - announcement service")
+			return nil, respErr
+		}
+	}
+	resp := &pb.EditAnnouncementResponse{
+		Message: "success",
+	}
+	return resp, nil
 }

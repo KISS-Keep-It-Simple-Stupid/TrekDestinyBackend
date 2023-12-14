@@ -3,9 +3,12 @@ package db
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"time"
 
+	"github.com/KISS-Keep-It-Simple-Stupid/TrekDestinyBackend/services/userprofile/helper"
 	"github.com/KISS-Keep-It-Simple-Stupid/TrekDestinyBackend/services/userprofile/pb"
+	"github.com/aws/aws-sdk-go/service/s3"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -260,4 +263,47 @@ func (s *PostgresRepository) GetIdFromUsername(username string) (int, error) {
 		return -1, err
 	}
 	return id, nil
+}
+
+func (s *PostgresRepository) InsertChatList(host_id, guest_id int) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
+	defer cancel()
+	query := `insert into chatlist (host_id , guest_id )values ($1 , $2)`
+	_, err := s.DB.ExecContext(ctx, query, host_id, guest_id)
+	return err
+}
+
+func (s *PostgresRepository) GetChatList(guest_id int, obj *s3.S3) (*pb.ChatListResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
+	defer cancel()
+	query := `select c.id ,c.host_id , m.username from chatlist as c inner join members as m on c.host_id = m.id where c.guest_id = $1`
+	rows, err := s.DB.QueryContext(ctx, query, guest_id)
+	if err != nil {
+		if err != sql.ErrNoRows {
+			return nil, err
+		}
+		return &pb.ChatListResponse{
+			Users: make([]*pb.ChatList, 0),
+		}, nil
+	}
+
+	users := make([]*pb.ChatList, 0)
+	for rows.Next() {
+		temp_res := &pb.ChatList{}
+		err := rows.Scan(&temp_res.ID, &temp_res.HostID, &temp_res.Image)
+		if err != nil {
+			return nil, err
+		}
+		temp_res.Image, err = helper.GetImageURL(obj, fmt.Sprintf("user-%d", temp_res.HostID))
+		if err != nil {
+			return nil, err
+		}
+		users = append(users, temp_res)
+	}
+
+	resp := &pb.ChatListResponse{
+		Users: users,
+	}
+
+	return resp , nil
 }

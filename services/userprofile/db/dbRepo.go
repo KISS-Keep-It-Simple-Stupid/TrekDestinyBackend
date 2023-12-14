@@ -1,6 +1,9 @@
 package db
 
-import "github.com/KISS-Keep-It-Simple-Stupid/TrekDestinyBackend/services/userprofile/pb"
+import (
+	"github.com/KISS-Keep-It-Simple-Stupid/TrekDestinyBackend/services/userprofile/pb"
+	"github.com/aws/aws-sdk-go/service/s3"
+)
 
 type Repository interface {
 	GetUserDetails(usename string) (*pb.ProfileDetailsResponse, error)
@@ -10,4 +13,6 @@ type Repository interface {
 	GetPublicProfile(username string) (*pb.PublicProfileResponse, int, error)
 	GetPublicProfileHost(guest_id int, host_username string) (*pb.PublicProfileHostResponse, string, error)
 	GetIdFromUsername(username string) (int, error)
+	InsertChatList(host_id int, guest_id int) error
+	GetChatList(guest_id int, obj *s3.S3) (*pb.ChatListResponse, error)
 }

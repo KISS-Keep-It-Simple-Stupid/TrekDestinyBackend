@@ -15,9 +15,11 @@ type Repository interface {
 	GetOfferDetails(announcement_id int) (*pb.GetOfferResponse, error)
 	GetProfileAnnouncementDetails(user_id int) (*pb.GetCardProfileResponse, error)
 	ValidateOffer(announcement_id int, user_id int) (bool, string, error)
-	InsertPost(postInfo *pb.CreatePostRequest) (int, error)
+	InsertPost(postInfo *pb.CreatePostRequest) (error)
+	GetLastPostId() (int, error)
 	GetMyPostDetails(guest_id int) (*pb.GetMyPostResponse, error)
 	GetPostHostDetails(host_id int) (*pb.GetPostHostResponse, error)
 	AcceptUserAsHost(offerInfo *pb.AcceptOfferRequest) (error)
 	RejectUserAsHost(offerInfo *pb.RejectOfferRequest) (error)
+	UpdateAnnouncementInformation(announcementInfo *pb.EditAnnouncementRequest) error
 }

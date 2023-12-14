@@ -118,6 +118,15 @@ services:
       - trekdestiny
     ports:
       - 9092:8084
+  # webserver:
+  #   build: ./nginx
+  #   container_name: nginx-back
+  #   restart: on-failure
+  #   networks:
+  #     - trekdestiny
+  #   ports:
+  #     - 8080:443
+  #     - 8081:80
 volumes:
   trekdestinyData:
   trekdestinyData_chat:

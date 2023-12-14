@@ -331,3 +331,82 @@ func (s *Repository) RejectOffer(w http.ResponseWriter, r *http.Request) {
 		helpers.MessageGenerator(w, resp.Message, http.StatusBadRequest)
 	}
 }
+
+func (s *Repository) UploadPostImage(w http.ResponseWriter, r *http.Request) {
+	reqToken := r.Header.Get("Authorization")
+	splitToken := strings.Split(reqToken, "Jwt ")
+	if len(splitToken) < 2 {
+		helpers.MessageGenerator(w, "User is UnAuthorized", http.StatusUnauthorized)
+		return
+	}
+	reqToken = splitToken[1]
+	// Parse the form data, including the uploaded file
+	err := r.ParseMultipartForm(10 << 20) // 10 MB limit for the image size
+	if err != nil {
+		helpers.MessageGenerator(w, "image size is too large", http.StatusBadRequest)
+		return
+	}
+
+	// Get the file from the form data
+	file, _, err := r.FormFile("image")
+	if err != nil {
+		helpers.MessageGenerator(w, "There is no image field in form data", http.StatusBadRequest)
+		return
+	}
+	defer file.Close()
+	image_data, err := io.ReadAll(file)
+	if err != nil {
+		helpers.MessageGenerator(w, "Image file is corrupted", http.StatusBadRequest)
+		return
+	}
+	uploadReq := &announcement_pb.PostImageRequest{
+		AccessToken: reqToken,
+		ImageData:   image_data,
+	}
+	resp, err := s.announcement_client.UploadPostImage(context.Background(), uploadReq)
+	if err != nil {
+		helpers.MessageGenerator(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	if resp.Message == "success" {
+		helpers.ResponseGenerator(w, resp)
+	} else if resp.Message == "User is UnAuthorized - announcement service" {
+		helpers.MessageGenerator(w, resp.Message, http.StatusUnauthorized)
+	} else {
+		helpers.MessageGenerator(w, resp.Message, http.StatusBadRequest)
+	}
+}
+
+func (s *Repository) EditAnnouncement(w http.ResponseWriter, r *http.Request) {
+	reqToken := r.Header.Get("Authorization")
+	splitToken := strings.Split(reqToken, "Jwt ")
+	if len(splitToken) < 2 {
+		helpers.MessageGenerator(w, "User is UnAuthorized", http.StatusUnauthorized)
+		return
+	}
+	reqToken = splitToken[1]
+	editReq := &announcement_pb.EditAnnouncementRequest{}
+	postData, err := io.ReadAll(r.Body)
+	if err != nil {
+		helpers.MessageGenerator(w, "wrong post body format", http.StatusBadRequest)
+		return
+	}
+	err = json.Unmarshal(postData, editReq)
+	if err != nil {
+		helpers.MessageGenerator(w, "wrong post body fields", http.StatusBadRequest)
+		return
+	}
+	editReq.AccessToken = reqToken
+	resp, err := s.announcement_client.EditAnnouncement(context.Background(), editReq)
+	if err != nil {
+		helpers.MessageGenerator(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	if resp.Message == "success" {
+		helpers.ResponseGenerator(w, resp)
+	} else if resp.Message == "User is UnAuthorized - announcement service" {
+		helpers.MessageGenerator(w, resp.Message, http.StatusUnauthorized)
+	} else {
+		helpers.MessageGenerator(w, resp.Message, http.StatusBadRequest)
+	}
+}
