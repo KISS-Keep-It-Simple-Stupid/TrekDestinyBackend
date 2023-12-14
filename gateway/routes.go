@@ -41,5 +41,6 @@ func getRoutes(handler *handlers.Repository) http.Handler {
 	mux.Post("/public-profile-host", handler.PublicProfileHost)
 	mux.Post("/chat-list" , handler.ChatListPost)
 	mux.Get("/chat-list" , handler.ChatList)
+	mux.Post("/upload-post-image", handler.UploadPostImage)
 	return mux
 }
