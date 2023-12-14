@@ -94,13 +94,11 @@ message createPostRequest {
 
 message createPostResponse {
     string Message = 1;
-    int32 PostId = 2;
 }
 
 message postImageRequest {
     string AccessToken = 1;
-    int32 PostId = 2;
-    bytes ImageData = 3;
+    bytes ImageData = 2;
 }
 
 message postImageResponse {

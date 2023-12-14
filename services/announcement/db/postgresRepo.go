@@ -302,7 +302,7 @@ func (s *PostgresRepository) ValidateOffer(announcement_id int, user_id int) (bo
 	return true, "", nil
 }
 
-func (s *PostgresRepository) InsertPost(postInfo *pb.CreatePostRequest) (int, error) {
+func (s *PostgresRepository) InsertPost(postInfo *pb.CreatePostRequest) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
 	defer cancel()
 	var host_id int
@@ -310,15 +310,21 @@ func (s *PostgresRepository) InsertPost(postInfo *pb.CreatePostRequest) (int, er
 	query := `select user_id, main_host from announcement where id = $1`
 	err := s.DB.QueryRowContext(ctx, query, postInfo.AnnouncementId).Scan(&guest_id, &host_id)
 	if err != nil {
-		return -1, err
+		return err
 	}
 	query = `insert into post (announcement_id, host_id, guest_id, title, rating, body) values ($1, $2, $3, $4, $5, $6)`
 	_, err = s.DB.ExecContext(ctx, query, postInfo.AnnouncementId, host_id, guest_id, postInfo.PostTitle, int(postInfo.HostRating), postInfo.PostBody)
 	if err != nil {
-		return -1, err
+		return err
 	}
+	return nil
+}
+
+func (s *PostgresRepository) GetLastPostId() (int, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
+	defer cancel()
 	var post_id int
-	err = s.DB.QueryRow("select id from post order by id desc limit 1").Scan(&post_id)
+	err := s.DB.QueryRowContext(ctx, "select id from post order by id desc limit 1").Scan(&post_id)
 	if err != nil {
 		return -1, err
 	}

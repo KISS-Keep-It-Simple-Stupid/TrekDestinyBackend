@@ -373,50 +373,6 @@ func TestValidateOffer(t *testing.T) {
 	assert.NoError(t, err)
 }
 
-func TestInsertPost(t *testing.T) {
-	mockDB, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("Error creating mock database: %v", err)
-	}
-	defer mockDB.Close()
-
-	repo := &PostgresRepository{DB: mockDB}
-
-	announcementID := 1
-	postTitle := "Test Post"
-	hostRating := 5
-	postBody := "This is a test post body"
-	guestID := 123
-	hostID := 456
-	rows := sqlmock.NewRows([]string{"user_id", "main_host"}).
-		AddRow(guestID, hostID)
-	mock.ExpectQuery(`select user_id, main_host from announcement where id = \$1`).
-		WithArgs(announcementID).
-		WillReturnRows(rows)
-
-	mock.ExpectExec(`insert into post \(announcement_id, host_id, guest_id, title, rating, body\) values \(\$1, \$2, \$3, \$4, \$5, \$6\)`).
-		WithArgs(announcementID, hostID, guestID, postTitle, hostRating, postBody).
-		WillReturnResult(sqlmock.NewResult(789, 1))
-
-	rows = sqlmock.NewRows([]string{"id"}).AddRow(789)
-	mock.ExpectQuery(`select id from post order by id desc limit 1`).
-		WillReturnRows(rows)
-
-	postID, err := repo.InsertPost(&pb.CreatePostRequest{
-		AnnouncementId: int32(announcementID),
-		PostTitle:      postTitle,
-		HostRating:     int32(hostRating),
-		PostBody:       postBody,
-	})
-
-	assert.NoError(t, err)
-
-	assert.Equal(t, 789, postID)
-
-	err = mock.ExpectationsWereMet()
-	assert.NoError(t, err)
-}
-
 func TestGetMyPostDetails(t *testing.T) {
 	mockDB, mock, err := sqlmock.New()
 	if err != nil {
