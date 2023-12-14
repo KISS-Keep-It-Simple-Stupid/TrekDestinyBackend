@@ -471,3 +471,23 @@ func (s *Repository) DeleteAnnouncement(ctx context.Context, r *pb.DeleteAnnounc
 	}
 	return resp, nil
 }
+
+func (s *Repository) EditPost(ctx context.Context, r *pb.EditPostRequest) (*pb.EditPostResponse, error) {
+	_, err := helper.DecodeToken(r.AccessToken)
+	if err != nil {
+		resp := &pb.EditPostResponse{
+			Message: "User is UnAuthorized",
+		}
+		return resp, nil
+	}
+	err = s.DB.UpdatePostInformation(r)
+	if err != nil {
+		log.Println(err.Error())
+		err := errors.New("internal error while updating post info - announcement service")
+		return nil, err
+	}
+	resp := &pb.EditPostResponse{
+		Message: "success",
+	}
+	return resp, nil
+}

@@ -185,6 +185,18 @@ message deleteAnnouncementResponse {
     string Message = 1;
 }
 
+message editPostRequest {
+    string AccessToken = 1;
+    int32 PostId = 2;
+    string PostTitle = 3;
+    int32 HostRating = 4;
+    string PostBody = 5;
+}
+
+message editPostResponse {
+    string Message = 1;
+}
+
 
 service Announcement {
     rpc CreateCard(createCardRequest) returns (createCardResponse);
@@ -200,4 +212,5 @@ service Announcement {
     rpc UploadPostImage(postImageRequest) returns (postImageResponse);
     rpc EditAnnouncement(editAnnouncementRequest) returns (editAnnouncementResponse);
     rpc DeleteAnnouncement(deleteAnnouncementRequest) returns (deleteAnnouncementResponse);
+    rpc EditPost(editPostRequest) returns (editPostResponse);
 }

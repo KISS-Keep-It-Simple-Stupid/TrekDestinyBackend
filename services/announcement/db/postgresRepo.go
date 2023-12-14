@@ -485,3 +485,19 @@ func (s *PostgresRepository) DeleteAnnouncement(announcement_id int) error {
 	_, err := s.DB.ExecContext(ctx, query, announcement_id)
 	return err
 }
+
+func (s *PostgresRepository) UpdatePostInformation(postInfo *pb.EditPostRequest) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
+	defer cancel()
+	query := `update post set  
+		title = COALESCE(NULLIF($1, ''), title),
+		rating = COALESCE(NULLIF($2, 0), rating),
+		body = COALESCE(NULLIF($3, ''), body)
+		where id = $4`
+	_, err := s.DB.ExecContext(ctx, query,
+		postInfo.PostTitle,
+		postInfo.HostRating,
+		postInfo.PostBody,
+		postInfo.PostId)
+	return err
+}

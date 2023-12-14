@@ -35,6 +35,7 @@ type AnnouncementClient interface {
 	UploadPostImage(ctx context.Context, in *PostImageRequest, opts ...grpc.CallOption) (*PostImageResponse, error)
 	EditAnnouncement(ctx context.Context, in *EditAnnouncementRequest, opts ...grpc.CallOption) (*EditAnnouncementResponse, error)
 	DeleteAnnouncement(ctx context.Context, in *DeleteAnnouncementRequest, opts ...grpc.CallOption) (*DeleteAnnouncementResponse, error)
+	EditPost(ctx context.Context, in *EditPostRequest, opts ...grpc.CallOption) (*EditPostResponse, error)
 }
 
 type announcementClient struct {
@@ -162,6 +163,15 @@ func (c *announcementClient) DeleteAnnouncement(ctx context.Context, in *DeleteA
 	return out, nil
 }
 
+func (c *announcementClient) EditPost(ctx context.Context, in *EditPostRequest, opts ...grpc.CallOption) (*EditPostResponse, error) {
+	out := new(EditPostResponse)
+	err := c.cc.Invoke(ctx, "/Announcement/EditPost", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // AnnouncementServer is the server API for Announcement service.
 // All implementations must embed UnimplementedAnnouncementServer
 // for forward compatibility
@@ -179,6 +189,7 @@ type AnnouncementServer interface {
 	UploadPostImage(context.Context, *PostImageRequest) (*PostImageResponse, error)
 	EditAnnouncement(context.Context, *EditAnnouncementRequest) (*EditAnnouncementResponse, error)
 	DeleteAnnouncement(context.Context, *DeleteAnnouncementRequest) (*DeleteAnnouncementResponse, error)
+	EditPost(context.Context, *EditPostRequest) (*EditPostResponse, error)
 	mustEmbedUnimplementedAnnouncementServer()
 }
 
@@ -224,6 +235,9 @@ func (UnimplementedAnnouncementServer) EditAnnouncement(context.Context, *EditAn
 }
 func (UnimplementedAnnouncementServer) DeleteAnnouncement(context.Context, *DeleteAnnouncementRequest) (*DeleteAnnouncementResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteAnnouncement not implemented")
+}
+func (UnimplementedAnnouncementServer) EditPost(context.Context, *EditPostRequest) (*EditPostResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method EditPost not implemented")
 }
 func (UnimplementedAnnouncementServer) mustEmbedUnimplementedAnnouncementServer() {}
 
@@ -472,6 +486,24 @@ func _Announcement_DeleteAnnouncement_Handler(srv interface{}, ctx context.Conte
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Announcement_EditPost_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(EditPostRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AnnouncementServer).EditPost(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/Announcement/EditPost",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AnnouncementServer).EditPost(ctx, req.(*EditPostRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Announcement_ServiceDesc is the grpc.ServiceDesc for Announcement service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -530,6 +562,10 @@ var Announcement_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "DeleteAnnouncement",
 			Handler:    _Announcement_DeleteAnnouncement_Handler,
+		},
+		{
+			MethodName: "EditPost",
+			Handler:    _Announcement_EditPost_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
