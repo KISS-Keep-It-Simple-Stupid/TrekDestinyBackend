@@ -246,8 +246,15 @@ func (s *Repository) CreatePost(ctx context.Context, r *pb.CreatePostRequest) (*
 		return nil, respErr
 	}
 
+	post_id, err := s.DB.GetLastPostId()
+	if err != nil {
+		respErr := errors.New("internal server error while getting last post id - announcement service")
+		return nil, respErr
+	}
+
 	resp := pb.CreatePostResponse{
 		Message: "success",
+		PostId: int32(post_id),
 	}
 	return &resp, nil
 }
@@ -260,17 +267,11 @@ func (s *Repository) UploadPostImage(ctx context.Context, r *pb.PostImageRequest
 		}
 		return resp, nil
 	}
-	// Get last post id
-	post_id, err := s.DB.GetLastPostId()
-	if err != nil {
-		respErr := errors.New("internal server error while getting last post id - announcement service")
-		return nil, respErr
-	}
 	bucketName := viper.Get("OBJECT_STORAGE_BUCKET_NAME").(string)
 	// Upload the image to S3
 	_, err = s.S3.PutObject(&s3.PutObjectInput{
 		Bucket:             aws.String(bucketName),
-		Key:                aws.String(fmt.Sprintf("post-%d", post_id)),
+		Key:                aws.String(fmt.Sprintf("post-%d", r.PostId)),
 		ACL:                aws.String("private"), // Set ACL as needed
 		Body:               bytes.NewReader(r.ImageData),
 		ContentLength:      aws.Int64(int64(len(r.ImageData))),
