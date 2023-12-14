@@ -491,3 +491,34 @@ func (s *Repository) EditPost(ctx context.Context, r *pb.EditPostRequest) (*pb.E
 	}
 	return resp, nil
 }
+
+func (s *Repository) UploadHostHouseImage(ctx context.Context, r *pb.HostHouseImageRequest) (*pb.HostHouseImageResponse, error) {
+	claims, err := helper.DecodeToken(r.AccessToken)
+	if err != nil {
+		resp := &pb.HostHouseImageResponse{
+			Message: "User is UnAuthorized - announcement service",
+		}
+		return resp, nil
+	}
+	bucketName := viper.Get("OBJECT_STORAGE_BUCKET_NAME").(string)
+	for i := 0; i < len(r.ImageData); i++ {
+		_, err = s.S3.PutObject(&s3.PutObjectInput{
+			Bucket:             aws.String(bucketName),
+			Key:                aws.String(fmt.Sprintf("user-%d-host-%d", claims.UserID, i + 1)),
+			ACL:                aws.String("private"), // Set ACL as needed
+			Body:               bytes.NewReader(r.ImageData[i]),
+			ContentLength:      aws.Int64(int64(len(r.ImageData[i]))),
+			ContentType:        aws.String("image/jpeg"), // Set content type based on your file type
+			ContentDisposition: aws.String("attachment"),
+		})
+		if err != nil {
+			log.Println(err.Error())
+			err := errors.New("internal error while uploading image to object storage - announcement service")
+			return nil, err
+		}
+	}
+	resp := &pb.HostHouseImageResponse{
+		Message: "success",
+	}
+	return resp, nil
+}

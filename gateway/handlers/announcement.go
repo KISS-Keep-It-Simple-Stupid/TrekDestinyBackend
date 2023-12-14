@@ -3,6 +3,7 @@ package handlers
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"strings"
@@ -466,6 +467,51 @@ func (s *Repository) EditPost(w http.ResponseWriter, r *http.Request) {
 	}
 	editReq.AccessToken = reqToken
 	resp, err := s.announcement_client.EditPost(context.Background(), editReq)
+	if err != nil {
+		helpers.MessageGenerator(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	if resp.Message == "success" {
+		helpers.ResponseGenerator(w, resp)
+	} else if resp.Message == "User is UnAuthorized - announcement service" {
+		helpers.MessageGenerator(w, resp.Message, http.StatusUnauthorized)
+	} else {
+		helpers.MessageGenerator(w, resp.Message, http.StatusBadRequest)
+	}
+}
+
+func (s *Repository) UploadHostHouseImage(w http.ResponseWriter, r *http.Request) {
+	reqToken := r.Header.Get("Authorization")
+	splitToken := strings.Split(reqToken, "Jwt ")
+	if len(splitToken) < 2 {
+		helpers.MessageGenerator(w, "User is UnAuthorized", http.StatusUnauthorized)
+		return
+	}
+	reqToken = splitToken[1]
+	// Parse the form data, including the uploaded file
+	err := r.ParseMultipartForm(10 << 20) // 10 MB limit for the image size
+	if err != nil {
+		helpers.MessageGenerator(w, "image size is too large", http.StatusBadRequest)
+		return
+	}
+	uploadReq := &announcement_pb.HostHouseImageRequest{
+		AccessToken: reqToken,
+		ImageData:   make([][]byte, 0, 3),
+	}
+	for i := 1; i < 4; i++ {
+		file, _, err := r.FormFile(fmt.Sprintf("image-%d", i))
+		if err != nil {
+			break
+		}
+		defer file.Close()
+		image_data, err := io.ReadAll(file)
+		if err != nil {
+			helpers.MessageGenerator(w, "Image file is corrupted", http.StatusBadRequest)
+			return
+		}
+		uploadReq.ImageData = append(uploadReq.ImageData, image_data)
+	}
+	resp, err := s.announcement_client.UploadHostHouseImage(context.Background(), uploadReq)
 	if err != nil {
 		helpers.MessageGenerator(w, err.Error(), http.StatusInternalServerError)
 		return

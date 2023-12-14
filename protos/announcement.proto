@@ -197,6 +197,15 @@ message editPostResponse {
     string Message = 1;
 }
 
+message hostHouseImageRequest {
+    string AccessToken = 1;
+    repeated bytes ImageData = 2;
+}
+
+message hostHouseImageResponse {
+    string Message = 1;
+}
+
 
 service Announcement {
     rpc CreateCard(createCardRequest) returns (createCardResponse);
@@ -213,4 +222,5 @@ service Announcement {
     rpc EditAnnouncement(editAnnouncementRequest) returns (editAnnouncementResponse);
     rpc DeleteAnnouncement(deleteAnnouncementRequest) returns (deleteAnnouncementResponse);
     rpc EditPost(editPostRequest) returns (editPostResponse);
+    rpc UploadHostHouseImage(hostHouseImageRequest) returns (hostHouseImageResponse);
 }
