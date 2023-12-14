@@ -112,10 +112,39 @@ message publicProfileHostResponse {
     string Message = 20;
 }
 
+message addChatListRequest {
+    int32 HostID = 1;
+    string AccessToken = 2 ;
+}
+
+message addChatListResponse {
+    string message  = 1;
+}
+
+message chatListRequest {
+    string AccessToken = 1;
+}
+
+message chatList {
+    int32 ID = 1;
+    int32 HostID = 2;
+    string username = 3;
+    string image = 4 ;
+}
+
+message chatListResponse {
+    repeated chatList users =1;
+    string message  = 2;
+}
+
+
+
 service UserProfile {
     rpc ProfileDetails(profileDetailsRequest) returns (profileDetailsResponse);
     rpc EditProfile(editProfileRequest) returns (editProfileResponse);
     rpc UploadImage (ImageRequest) returns (ImageResponse);
     rpc PublicProfile(publicProfileRequest) returns (publicProfileResponse);
     rpc PublicProfileHost(publicProfileHostRequest) returns (publicProfileHostResponse);
+    rpc AddToChatList(addChatListRequest) returns (addChatListResponse);
+    rpc GetChatList(chatListRequest) returns (chatListResponse);
 }

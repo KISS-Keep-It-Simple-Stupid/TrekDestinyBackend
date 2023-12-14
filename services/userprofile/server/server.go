@@ -175,3 +175,41 @@ func (s *Repository) PublicProfileHost(ctx context.Context, r *pb.PublicProfileH
 	resp.Message = "success"
 	return resp, nil
 }
+
+func (s *Repository) AddToChatList(ctx context.Context, r *pb.AddChatListRequest) (*pb.AddChatListResponse, error) {
+	claims, err := helper.DecodeToken(r.AccessToken)
+	if err != nil {
+		resp := &pb.AddChatListResponse{
+			Message: "User is UnAuthorized",
+		}
+		return resp, nil
+	}
+	err = s.DB.InsertChatList(int(r.HostID), claims.UserID)
+	if err != nil {
+		log.Println(err.Error())
+		err := errors.New("internal error while inserting an item to chat list - userprofile service")
+		return nil, err
+	}
+	resp := &pb.AddChatListResponse{
+		Message: "success",
+	}
+	return resp, nil
+}
+
+func (s *Repository) GetChatList(ctx context.Context, r *pb.ChatListRequest) (*pb.ChatListResponse, error) {
+	claims, err := helper.DecodeToken(r.AccessToken)
+	if err != nil {
+		resp := &pb.ChatListResponse{
+			Message: "User is UnAuthorized",
+		}
+		return resp, nil
+	}
+	resp, err := s.DB.GetChatList(claims.UserID, s.S3)
+	if err != nil {
+		log.Println(err.Error())
+		err := errors.New("internal error while retrieving chat list items - userprofile service")
+		return nil, err
+	}
+	resp.Message = "success"
+	return resp, nil
+}
