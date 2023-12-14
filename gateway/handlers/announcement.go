@@ -199,7 +199,7 @@ func (s *Repository) CreatePost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if resp.Message == "success" {
-		helpers.MessageGenerator(w, "post created successfully", http.StatusCreated)
+		helpers.ResponseGenerator(w, resp)
 	} else if resp.Message == "User is UnAuthorized - announcement service" {
 		helpers.MessageGenerator(w, resp.Message, http.StatusUnauthorized)
 	} else {
