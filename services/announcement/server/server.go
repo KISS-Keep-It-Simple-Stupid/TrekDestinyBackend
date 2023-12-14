@@ -451,3 +451,23 @@ func (s *Repository) EditAnnouncement(ctx context.Context, r *pb.EditAnnouncemen
 	}
 	return resp, nil
 }
+
+func (s *Repository) DeleteAnnouncement(ctx context.Context, r *pb.DeleteAnnouncementRequest) (*pb.DeleteAnnouncementResponse, error) {
+	_, err := helper.DecodeToken(r.AccessToken)
+	if err != nil {
+		resp := &pb.DeleteAnnouncementResponse{
+			Message: "User is UnAuthorized",
+		}
+		return resp, nil
+	}
+	err = s.DB.DeleteAnnouncement(int(r.CardId))
+	if err != nil {
+		log.Println(err.Error())
+		err := errors.New("internal error while deleting announcement - announcement service")
+		return nil, err
+	}
+	resp := &pb.DeleteAnnouncementResponse{
+		Message: "success",
+	}
+	return resp, nil
+}

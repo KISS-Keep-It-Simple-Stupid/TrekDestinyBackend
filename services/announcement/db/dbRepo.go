@@ -22,4 +22,5 @@ type Repository interface {
 	AcceptUserAsHost(offerInfo *pb.AcceptOfferRequest) (error)
 	RejectUserAsHost(offerInfo *pb.RejectOfferRequest) (error)
 	UpdateAnnouncementInformation(announcementInfo *pb.EditAnnouncementRequest) error
+	DeleteAnnouncement(announcement_id int) error
 }

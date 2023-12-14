@@ -176,6 +176,15 @@ message editAnnouncementResponse {
     string Message = 1;
 }
 
+message deleteAnnouncementRequest {
+    string AccessToken = 1;
+    int32 CardId = 2;
+}
+
+message deleteAnnouncementResponse {
+    string Message = 1;
+}
+
 
 service Announcement {
     rpc CreateCard(createCardRequest) returns (createCardResponse);
@@ -190,4 +199,5 @@ service Announcement {
     rpc RejectOffer(rejectOfferRequest) returns (rejectOfferResponse);
     rpc UploadPostImage(postImageRequest) returns (postImageResponse);
     rpc EditAnnouncement(editAnnouncementRequest) returns (editAnnouncementResponse);
+    rpc DeleteAnnouncement(deleteAnnouncementRequest) returns (deleteAnnouncementResponse);
 }
