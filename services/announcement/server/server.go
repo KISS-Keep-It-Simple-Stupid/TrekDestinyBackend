@@ -401,25 +401,25 @@ func (s *Repository) RejectOffer(ctx context.Context, r *pb.RejectOfferRequest) 
 }
 
 func (s *Repository) EditAnnouncement(ctx context.Context, r *pb.EditAnnouncementRequest) (*pb.EditAnnouncementResponse, error) {
-	claims, err := helper.DecodeToken(r.AccessToken)
+	_, err := helper.DecodeToken(r.AccessToken)
 	if err != nil {
 		resp := &pb.EditAnnouncementResponse{
 			Message: "User is UnAuthorized",
 		}
 		return resp, nil
 	}
-	check, err := s.DB.CheckAnnouncementTimeValidation(r.StartDate, r.EndDate, claims.UserID)
-	if err != nil {
-		respErr := errors.New("internal server error while checking announcement existance - announcement service")
-		log.Println(err)
-		return nil, respErr
-	}
-	if !check {
-		resp := pb.EditAnnouncementResponse{
-			Message: "you already have created an announcement in this time range",
-		}
-		return &resp, nil
-	}
+	// check, err := s.DB.CheckAnnouncementTimeValidation(r.StartDate, r.EndDate, claims.UserID)
+	// if err != nil {
+	// 	respErr := errors.New("internal server error while checking announcement existance - announcement service")
+	// 	log.Println(err)
+	// 	return nil, respErr
+	// }
+	// if !check {
+	// 	resp := pb.EditAnnouncementResponse{
+	// 		Message: "you already have created an announcement in this time range",
+	// 	}
+	// 	return &resp, nil
+	// }
 	err = s.DB.UpdateAnnouncementInformation(r)
 	if err != nil {
 		log.Println(err.Error())
