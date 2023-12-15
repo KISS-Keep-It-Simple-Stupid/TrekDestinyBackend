@@ -184,7 +184,7 @@ func (s *Repository) AddToChatList(ctx context.Context, r *pb.AddChatListRequest
 		}
 		return resp, nil
 	}
-	err = s.DB.InsertChatList(int(r.HostID), claims.UserID)
+	err = s.DB.InsertChatList(int(r.HostID), claims.UserID, int(r.AnnouncementID))
 	if err != nil {
 		log.Println(err.Error())
 		err := errors.New("internal error while inserting an item to chat list - userprofile service")

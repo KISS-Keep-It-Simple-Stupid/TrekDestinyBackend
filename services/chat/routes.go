@@ -18,8 +18,8 @@ func GetRoutes(handler *handlers.Repository) http.Handler {
 		AllowCredentials: false,
 		MaxAge:           300, // Maximum value not ignored by any of major browsers
 	}))
-	mux.Get("/{id1}/{id2}", handler.Chat)
-	mux.Get("/count/{id1}/{id2}", handler.Count)
-	mux.Get("/history/{id1}/{id2}", handler.History)
+	mux.Get("/{id1}/{id2}/{id3}", handler.Chat)
+	mux.Get("/count/{id1}/{id2}/{id3}", handler.Count)
+	mux.Get("/history/{id1}/{id2}/{id3}", handler.History)
 	return mux
 }

@@ -115,6 +115,7 @@ message publicProfileHostResponse {
 message addChatListRequest {
     int32 HostID = 1;
     string AccessToken = 2 ;
+    int32 AnnouncementID = 3;
 }
 
 message addChatListResponse {
@@ -130,14 +131,14 @@ message chatList {
     int32 HostID = 2;
     string username = 3;
     string image = 4 ;
+    string isHost = 5;
+    int32 annoucement_id = 6;
 }
 
 message chatListResponse {
     repeated chatList users =1;
     string message  = 2;
 }
-
-
 
 service UserProfile {
     rpc ProfileDetails(profileDetailsRequest) returns (profileDetailsResponse);

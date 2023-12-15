@@ -39,7 +39,8 @@ func (repo *Repository) Chat(w http.ResponseWriter, r *http.Request) {
 	}
 	id1 := chi.URLParam(r, "id1")
 	id2 := chi.URLParam(r, "id2")
-	chatID := id1 + "-" + id2
+	id3 := chi.URLParam(r, "id3")
+	chatID := id1 + "-" + id2 + "-" +id3
 	user := &models.Client{Hub: repo.Hub, Conn: conn, Send: make(chan models.Message), ChatID: chatID}
 	user.Hub.Connect <- user
 
@@ -50,7 +51,8 @@ func (repo *Repository) Chat(w http.ResponseWriter, r *http.Request) {
 func (repo *Repository) Count(w http.ResponseWriter, r *http.Request) {
 	id1 := chi.URLParam(r, "id1")
 	id2 := chi.URLParam(r, "id2")
-	chatID := id1 + "-" + id2
+	id3 := chi.URLParam(r, "id3")
+	chatID := id1 + "-" + id2 + "-" +id3
 	count := repo.DB.GetCount(chatID)
 	helper.ResponseGenerator(w, struct {
 		Count int `json:"count"`
@@ -62,7 +64,8 @@ func (repo *Repository) Count(w http.ResponseWriter, r *http.Request) {
 func (repo *Repository) History(w http.ResponseWriter, r *http.Request) {
 	id1 := chi.URLParam(r, "id1")
 	id2 := chi.URLParam(r, "id2")
-	chatID := id1 + "-" + id2
+	id3 := chi.URLParam(r, "id3")
+	chatID := id1 + "-" + id2 + "-" +id3
 	pg := r.URL.Query().Get("page")
 	page := 1
 	var err error

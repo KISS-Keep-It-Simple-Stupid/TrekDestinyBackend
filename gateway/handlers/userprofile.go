@@ -3,10 +3,12 @@ package handlers
 import (
 	"context"
 	"encoding/json"
-	"github.com/go-chi/chi/v5"
+	"fmt"
 	"io"
 	"net/http"
 	"strings"
+
+	"github.com/go-chi/chi/v5"
 
 	"github.com/KISS-Keep-It-Simple-Stupid/TrekDestinyBackend/gateway/helpers"
 	userprofile_pb "github.com/KISS-Keep-It-Simple-Stupid/TrekDestinyBackend/gateway/services/userprofile"
@@ -212,6 +214,10 @@ func (s *Repository) ChatList(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		helpers.MessageGenerator(w, err.Error(), http.StatusInternalServerError)
 		return
+	}
+
+	for _, user := range resp.Users {
+		fmt.Println(user.IsHost)
 	}
 	if resp.Message == "success" {
 		helpers.ResponseGenerator(w, resp)

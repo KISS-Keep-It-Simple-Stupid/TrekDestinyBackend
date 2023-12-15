@@ -13,6 +13,6 @@ type Repository interface {
 	GetPublicProfile(username string) (*pb.PublicProfileResponse, int, error)
 	GetPublicProfileHost(guest_id int, host_username string) (*pb.PublicProfileHostResponse, string, error)
 	GetIdFromUsername(username string) (int, error)
-	InsertChatList(host_id int, guest_id int) error
+	InsertChatList(host_id, guest_id, announcement_id int) error
 	GetChatList(guest_id int, obj *s3.S3) (*pb.ChatListResponse, error)
 }
