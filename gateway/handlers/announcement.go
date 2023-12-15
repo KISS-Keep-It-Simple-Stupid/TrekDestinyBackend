@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/KISS-Keep-It-Simple-Stupid/TrekDestinyBackend/gateway/helpers"
@@ -181,18 +182,47 @@ func (s *Repository) CreatePost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	reqToken = splitToken[1]
-	createpostReq := &announcement_pb.CreatePostRequest{}
-	postData, err := io.ReadAll(r.Body)
+	// Parse the form data, including the uploaded file
+	err := r.ParseMultipartForm(10 << 20) // 10 MB limit for the image size
 	if err != nil {
-		helpers.MessageGenerator(w, "wrong post body format", http.StatusBadRequest)
+		helpers.MessageGenerator(w, "image size is too large", http.StatusBadRequest)
 		return
 	}
-	err = json.Unmarshal(postData, createpostReq)
+
+	// Get the file from the form data
+	file, _, err := r.FormFile("ImageData")
 	if err != nil {
-		helpers.MessageGenerator(w, "wrong post body fields", http.StatusBadRequest)
+		helpers.MessageGenerator(w, "There is no image field in form data", http.StatusBadRequest)
 		return
 	}
-	createpostReq.AccessToken = reqToken
+	defer file.Close()
+	image_data, err := io.ReadAll(file)
+	if err != nil {
+		helpers.MessageGenerator(w, "Image file is corrupted", http.StatusBadRequest)
+		return
+	}
+
+	announcementID, err := strconv.ParseInt(r.FormValue("AnnouncementId"), 10, 32)
+	if err != nil {
+		helpers.MessageGenerator(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	postTitle := r.FormValue("PostTitle")
+	hostRating, err := strconv.ParseInt(r.FormValue("HostRating"), 10, 32)
+	if err != nil {
+		helpers.MessageGenerator(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	postBody := r.FormValue("PostBody")
+	createpostReq := &announcement_pb.CreatePostRequest{
+		AccessToken:    reqToken,
+		AnnouncementId: int32(announcementID),
+		PostTitle:      postTitle,
+		HostRating:     int32(hostRating),
+		PostBody:       postBody,
+		ImageData:      image_data,
+	}
+
 	resp, err := s.announcement_client.CreatePost(context.Background(), createpostReq)
 	if err != nil {
 		helpers.MessageGenerator(w, err.Error(), http.StatusInternalServerError)
@@ -320,51 +350,6 @@ func (s *Repository) RejectOffer(w http.ResponseWriter, r *http.Request) {
 	}
 	rejectofferReq.AccessToken = reqToken
 	resp, err := s.announcement_client.RejectOffer(context.Background(), rejectofferReq)
-	if err != nil {
-		helpers.MessageGenerator(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	if resp.Message == "success" {
-		helpers.ResponseGenerator(w, resp)
-	} else if resp.Message == "User is UnAuthorized - announcement service" {
-		helpers.MessageGenerator(w, resp.Message, http.StatusUnauthorized)
-	} else {
-		helpers.MessageGenerator(w, resp.Message, http.StatusBadRequest)
-	}
-}
-
-func (s *Repository) UploadPostImage(w http.ResponseWriter, r *http.Request) {
-	reqToken := r.Header.Get("Authorization")
-	splitToken := strings.Split(reqToken, "Jwt ")
-	if len(splitToken) < 2 {
-		helpers.MessageGenerator(w, "User is UnAuthorized", http.StatusUnauthorized)
-		return
-	}
-	reqToken = splitToken[1]
-	// Parse the form data, including the uploaded file
-	err := r.ParseMultipartForm(10 << 20) // 10 MB limit for the image size
-	if err != nil {
-		helpers.MessageGenerator(w, "image size is too large", http.StatusBadRequest)
-		return
-	}
-
-	// Get the file from the form data
-	file, _, err := r.FormFile("image")
-	if err != nil {
-		helpers.MessageGenerator(w, "There is no image field in form data", http.StatusBadRequest)
-		return
-	}
-	defer file.Close()
-	image_data, err := io.ReadAll(file)
-	if err != nil {
-		helpers.MessageGenerator(w, "Image file is corrupted", http.StatusBadRequest)
-		return
-	}
-	uploadReq := &announcement_pb.PostImageRequest{
-		AccessToken: reqToken,
-		ImageData:   image_data,
-	}
-	resp, err := s.announcement_client.UploadPostImage(context.Background(), uploadReq)
 	if err != nil {
 		helpers.MessageGenerator(w, err.Error(), http.StatusInternalServerError)
 		return

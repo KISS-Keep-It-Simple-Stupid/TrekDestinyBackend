@@ -90,20 +90,10 @@ message createPostRequest {
     string PostTitle = 3;
     int32 HostRating = 4;
     string PostBody = 5;
+    bytes ImageData = 6;
 }
 
 message createPostResponse {
-    string Message = 1;
-    int32 PostId = 2;
-}
-
-message postImageRequest {
-    string AccessToken = 1;
-    int32 PostId = 2;
-    bytes ImageData = 3;
-}
-
-message postImageResponse {
     string Message = 1;
 }
 
@@ -220,7 +210,6 @@ service Announcement {
     rpc GetPostHost(getPostHostRequest) returns (getPostHostResponse);
     rpc AcceptOffer(acceptOfferRequest) returns (acceptOfferResponse);
     rpc RejectOffer(rejectOfferRequest) returns (rejectOfferResponse);
-    rpc UploadPostImage(postImageRequest) returns (postImageResponse);
     rpc EditAnnouncement(editAnnouncementRequest) returns (editAnnouncementResponse);
     rpc DeleteAnnouncement(deleteAnnouncementRequest) returns (deleteAnnouncementResponse);
     rpc EditPost(editPostRequest) returns (editPostResponse);
