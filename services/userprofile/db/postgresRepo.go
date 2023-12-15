@@ -290,7 +290,7 @@ func (s *PostgresRepository) GetChatList(guest_id int, obj *s3.S3) (*pb.ChatList
 	users := make([]*pb.ChatList, 0)
 	for rows.Next() {
 		temp_res := &pb.ChatList{}
-		err := rows.Scan(&temp_res.ID, &temp_res.HostID, &temp_res.Image)
+		err := rows.Scan(&temp_res.ID, &temp_res.HostID, &temp_res.Username)
 		if err != nil {
 			return nil, err
 		}
