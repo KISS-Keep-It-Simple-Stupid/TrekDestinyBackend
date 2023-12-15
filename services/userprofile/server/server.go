@@ -49,6 +49,16 @@ func (s *Repository) ProfileDetails(ctx context.Context, r *pb.ProfileDetailsReq
 		err := errors.New("internal error while getting user image from object storage - userprofile service")
 		return nil, err
 	}
+
+	resp.HostHouseImages = make([]string, 0, 3);
+	for i := 1; i < 4; i++ {
+		url, err := helper.GetImageURL(s.S3, fmt.Sprintf("user-%d-host-%d", claims.UserID, i))
+		if err != nil {
+			break
+		}
+		resp.HostHouseImages = append(resp.HostHouseImages, url)
+	}
+
 	resp.Message = "success"
 	return resp, nil
 }
@@ -172,6 +182,21 @@ func (s *Repository) PublicProfileHost(ctx context.Context, r *pb.PublicProfileH
 		err := errors.New("internal error while getting user image from object storage - userprofile service")
 		return nil, err
 	}
+
+	host_id, err := s.DB.GetIdFromUsername(r.Username)
+	if err != nil {
+		return nil, err
+	}
+
+	resp.HostHouseImages = make([]string, 0, 3);
+	for i := 1; i < 4; i++ {
+		url, err := helper.GetImageURL(s.S3, fmt.Sprintf("user-%d-host-%d", host_id, i))
+		if err != nil {
+			break
+		}
+		resp.HostHouseImages = append(resp.HostHouseImages, url)
+	}
+
 	resp.Message = "success"
 	return resp, nil
 }

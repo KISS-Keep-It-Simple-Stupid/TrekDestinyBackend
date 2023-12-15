@@ -27,7 +27,8 @@ message profileDetailsResponse {
     string IsSmokingAllowed = 17;
     int32 RoomNumber = 18;
     string image = 19;
-    string Message = 20;
+    repeated string HostHouseImages = 20;
+    string Message = 21;
 }
 
 message editProfileRequest{
@@ -109,7 +110,8 @@ message publicProfileHostResponse {
     string IsSmokingAllowed = 17;
     int32 RoomNumber = 18;
     string image = 19;
-    string Message = 20;
+    repeated string HostHouseImages = 20;
+    string Message = 21;
 }
 
 message addChatListRequest {
