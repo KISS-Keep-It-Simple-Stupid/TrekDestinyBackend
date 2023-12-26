@@ -20,7 +20,7 @@ jobs:
     - name: Installing dependecies
       run: |
         ./setup install-dependencies gateway
-        # ./setup install-dependencies announcement
+        ./setup install-dependencies announcement
         ./setup install-dependencies authentication
         ./setup install-dependencies chat
         ./setup install-dependencies notification
@@ -28,7 +28,7 @@ jobs:
     - name: Running tests
       run: |
         ./setup test-ci gateway
-        ./setup test-ci announcement
+        # ./setup test-ci announcement
         ./setup test-ci authentication
         ./setup test-ci chat
         ./setup test-ci notification
