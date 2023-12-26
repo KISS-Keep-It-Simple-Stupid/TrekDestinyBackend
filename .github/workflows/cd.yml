@@ -20,7 +20,7 @@ jobs:
     - name: Installing dependecies
       run: |
         ./setup install-dependencies gateway
-        ./setup install-dependencies announcement
+        # ./setup install-dependencies announcement
         ./setup install-dependencies authentication
         ./setup install-dependencies chat
         ./setup install-dependencies notification
@@ -36,6 +36,8 @@ jobs:
     
   deploy:
     runs-on: ubuntu-latest
+    needs: test
+    if: ${{ success() }}
     steps:
     - name: Deploy TrekDestiny using  ssh
       uses: appleboy/ssh-action@master
