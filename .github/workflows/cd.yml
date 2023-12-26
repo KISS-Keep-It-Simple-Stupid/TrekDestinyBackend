@@ -3,6 +3,37 @@ on:
   push:
     branches: [ develop ]
 jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+
+
+    - name: Setup go
+      uses: actions/setup-go@v4
+      with:
+        go-version: '1.20'
+    - run: go version
+
+
+    - name: Installing dependecies
+      run: |
+        ./setup install-dependencies gateway
+        ./setup install-dependencies announcement
+        ./setup install-dependencies authentication
+        ./setup install-dependencies chat
+        ./setup install-dependencies notification
+        ./setup install-dependencies userprofile
+    - name: Running tests
+      run: |
+        ./setup test-ci gateway
+        ./setup test-ci announcement
+        ./setup test-ci authentication
+        ./setup test-ci chat
+        ./setup test-ci notification
+        ./setup test-ci userprofile
+    
   deploy:
     runs-on: ubuntu-latest
     steps:

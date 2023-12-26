@@ -73,3 +73,5 @@ func (s *postgresRepo) DeleteNotification(notfiID int) error {
 	}
 	return err
 }
+
+
