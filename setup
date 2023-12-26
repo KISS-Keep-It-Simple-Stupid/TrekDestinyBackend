@@ -17,4 +17,20 @@ if [[ $arg == "proto" ]]; then
 elif [[ $arg == "test" ]]; then
   cd services/$2
   go test -coverprofile=coverage.out ./... && go tool cover -html=coverage.out
+elif [[ $arg == "test-ci" ]]; then
+    if [[ $2 == "gateway" ]]; then
+        cd gateway
+        go test ./...
+    else 
+        cd services/$2
+        go test ./...
+    fi
+elif [[ $arg == "install-dependencies" ]]; then
+    if [[ $2 == "gateway" ]]; then
+        cd gateway
+        go mod download
+    else 
+        cd services/$2
+        go mod download 
+    fi
 fi
