@@ -5,12 +5,15 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/go-chi/chi/v5"
 
 	"github.com/KISS-Keep-It-Simple-Stupid/TrekDestinyBackend/gateway/helpers"
+	announcement_pb "github.com/KISS-Keep-It-Simple-Stupid/TrekDestinyBackend/gateway/services/announcement"
 	userprofile_pb "github.com/KISS-Keep-It-Simple-Stupid/TrekDestinyBackend/gateway/services/userprofile"
 )
 
@@ -75,10 +78,46 @@ func (s *Repository) UploadImage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	reqToken = splitToken[1]
+	isHostImage := r.URL.Query().Get("host")
 	// Parse the form data, including the uploaded file
 	err := r.ParseMultipartForm(10 << 20) // 10 MB limit for the image size
 	if err != nil {
 		helpers.MessageGenerator(w, "image size is too large", http.StatusBadRequest)
+		return
+	}
+	if isHostImage != "" {
+		count, _ := strconv.Atoi(r.URL.Query().Get("count"))
+		hostImageUploadReq := &announcement_pb.HostHouseImageRequest{
+			AccessToken: reqToken,
+			ImageData:   make([][]byte, 0),
+		}
+		for i := 1; i <= count; i++ {
+			file, _, err := r.FormFile(fmt.Sprintf("image%d", i))
+			if err != nil {
+				log.Println(err.Error())
+				helpers.MessageGenerator(w, "inavlid key image", http.StatusBadRequest)
+				return
+			}
+			defer file.Close()
+			image, err := io.ReadAll(file)
+			if err != nil {
+				log.Println(err.Error())
+				helpers.MessageGenerator(w, "corrupted image", http.StatusBadRequest)
+				return
+			}
+			hostImageUploadReq.ImageData = append(hostImageUploadReq.ImageData, image)
+		}
+
+		resp, err := s.announcement_client.UploadHostHouseImage(context.Background(), hostImageUploadReq)
+		if err != nil {
+			helpers.MessageGenerator(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		if resp.Message == "success" {
+			helpers.MessageGenerator(w, "host images uploaded", http.StatusOK)
+		} else {
+			helpers.MessageGenerator(w, resp.Message, http.StatusBadRequest)
+		}
 		return
 	}
 

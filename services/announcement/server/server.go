@@ -488,10 +488,17 @@ func (s *Repository) UploadHostHouseImage(ctx context.Context, r *pb.HostHouseIm
 		return resp, nil
 	}
 	bucketName := viper.Get("OBJECT_STORAGE_BUCKET_NAME").(string)
+	for i := 0; i < 3; i++ {
+		err := helper.DeleteImage(s.S3, fmt.Sprintf("user-%d-host-%d", claims.UserID, i+1))
+		if err != nil {
+			log.Println(err.Error())
+			return nil, err
+		}
+	}
 	for i := 0; i < len(r.ImageData); i++ {
 		_, err = s.S3.PutObject(&s3.PutObjectInput{
 			Bucket:             aws.String(bucketName),
-			Key:                aws.String(fmt.Sprintf("user-%d-host-%d", claims.UserID, i + 1)),
+			Key:                aws.String(fmt.Sprintf("user-%d-host-%d", claims.UserID, i+1)),
 			ACL:                aws.String("private"), // Set ACL as needed
 			Body:               bytes.NewReader(r.ImageData[i]),
 			ContentLength:      aws.Int64(int64(len(r.ImageData[i]))),
