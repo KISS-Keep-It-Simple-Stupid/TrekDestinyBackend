@@ -37,3 +37,12 @@ func GetImageURL(s *s3.S3, object_key string) (string, error) {
 	}
 	return url, nil
 }
+
+func DeleteImage(s *s3.S3, object_key string) error {
+	bucketName := viper.Get("OBJECT_STORAGE_BUCKET_NAME").(string)
+	_, err := s.DeleteObject(&s3.DeleteObjectInput{
+		Bucket: aws.String(bucketName),
+		Key:    aws.String(object_key),
+	})
+	return err
+}
