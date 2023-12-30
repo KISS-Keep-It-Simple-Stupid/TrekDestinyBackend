@@ -127,8 +127,8 @@ func (s *PostgresRepository) GetAnnouncementDetails(filter []string, sort string
 			query += " asc"
 		}
 	}
-	query += " limit $1 offset $2"
-	rows, err := s.DB.QueryContext(ctx, query, pagesize, (pagenumber-1)*pagesize)
+	query2 := query + " limit $1 offset $2"
+	rows, err := s.DB.QueryContext(ctx, query2, pagesize, (pagenumber-1)*pagesize)
 	if err != nil {
 		return nil, err
 	}
@@ -154,10 +154,12 @@ func (s *PostgresRepository) GetAnnouncementDetails(filter []string, sort string
 		resp.Cards = append(resp.Cards, &card)
 	}
 	var cardcount int
-	query = `select COUNT(*) from announcement`
-	err = s.DB.QueryRow(query).Scan(&cardcount)
+	rows, err = s.DB.QueryContext(ctx, query)
 	if err != nil {
 		return nil, err
+	}
+	for rows.Next() {
+		cardcount++
 	}
 	resp.PageCount = int32(math.Ceil(float64(cardcount) / float64(pagesize)))
 	return &resp, nil
