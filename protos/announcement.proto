@@ -198,6 +198,16 @@ message hostHouseImageResponse {
     string Message = 1;
 }
 
+message uploadBlogImageRequest {
+    string AccessToken = 1;
+    bytes ImageData = 2;
+    int32 BlogID = 3;
+}
+
+message uploadBlogImageResponse {
+    string Message = 1;
+}
+
 
 service Announcement {
     rpc CreateCard(createCardRequest) returns (createCardResponse);
@@ -214,4 +224,5 @@ service Announcement {
     rpc DeleteAnnouncement(deleteAnnouncementRequest) returns (deleteAnnouncementResponse);
     rpc EditPost(editPostRequest) returns (editPostResponse);
     rpc UploadHostHouseImage(hostHouseImageRequest) returns (hostHouseImageResponse);
+    rpc UploadBlogImage(uploadBlogImageRequest) returns (uploadBlogImageResponse);
 }

@@ -79,6 +79,7 @@ func (s *Repository) UploadImage(w http.ResponseWriter, r *http.Request) {
 	}
 	reqToken = splitToken[1]
 	isHostImage := r.URL.Query().Get("host")
+	isBlogImage := r.URL.Query().Get("blog")
 	// Parse the form data, including the uploaded file
 	err := r.ParseMultipartForm(10 << 20) // 10 MB limit for the image size
 	if err != nil {
@@ -133,19 +134,38 @@ func (s *Repository) UploadImage(w http.ResponseWriter, r *http.Request) {
 		helpers.MessageGenerator(w, "Image file is corrupted", http.StatusBadRequest)
 		return
 	}
-	uploadReq := &userprofile_pb.ImageRequest{
-		ImageData:   image_data,
-		AccessToken: reqToken,
-	}
-	resp, err := s.userprofile_client.UploadImage(context.Background(), uploadReq)
-	if err != nil {
-		helpers.MessageGenerator(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	if resp.Message == "success" {
-		helpers.MessageGenerator(w, "image uploaded", http.StatusOK)
+	if isBlogImage != "" {
+		blogID, _ := strconv.Atoi(r.URL.Query().Get("id"))
+		blogUploadReq := &announcement_pb.UploadBlogImageRequest{
+			ImageData:   image_data,
+			AccessToken: reqToken,
+			BlogID:      int32(blogID),
+		}
+		resp, err := s.announcement_client.UploadBlogImage(context.Background(), blogUploadReq)
+		if err != nil {
+			helpers.MessageGenerator(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		if resp.Message == "success" {
+			helpers.MessageGenerator(w, "blog image uploaded", http.StatusOK)
+		} else {
+			helpers.MessageGenerator(w, resp.Message, http.StatusBadRequest)
+		}
 	} else {
-		helpers.MessageGenerator(w, resp.Message, http.StatusBadRequest)
+		uploadReq := &userprofile_pb.ImageRequest{
+			ImageData:   image_data,
+			AccessToken: reqToken,
+		}
+		resp, err := s.userprofile_client.UploadImage(context.Background(), uploadReq)
+		if err != nil {
+			helpers.MessageGenerator(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		if resp.Message == "success" {
+			helpers.MessageGenerator(w, "profile image uploaded", http.StatusOK)
+		} else {
+			helpers.MessageGenerator(w, resp.Message, http.StatusBadRequest)
+		}
 	}
 }
 
