@@ -2,545 +2,501 @@ package db
 
 import (
 	"database/sql"
-	"database/sql/driver"
 	"testing"
 	"time"
 
-	sqlmock "github.com/DATA-DOG/go-sqlmock"
-	pb "github.com/KISS-Keep-It-Simple-Stupid/TrekDestinyBackend/services/userprofile/pb"
+	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/KISS-Keep-It-Simple-Stupid/TrekDestinyBackend/services/userprofile/pb"
+	"github.com/aws/aws-sdk-go/service/s3"
+	_ "github.com/lib/pq"
 	"github.com/stretchr/testify/assert"
-	"golang.org/x/crypto/bcrypt"
 )
 
-func TestGetUserDetails(t *testing.T) {
+func TestPostgresRepository_GetUserDetails(t *testing.T) {
 	db, mock, err := sqlmock.New()
 	if err != nil {
-		t.Fatalf("Error creating mock database: %v", err)
+		t.Fatalf("Failed to initialize SQL mock: %v", err)
 	}
 	defer db.Close()
 
 	repo := &PostgresRepository{DB: db}
 
-	// Expected query and test data
-	expectedQuery := `select email, username, firstname, lastname, birthdate, state, country, gender, joiningdate, ishost, 
-		COALESCE(NULLIF(bio, NULL), '') as bio,
-		COALESCE(NULLIF(city, NULL), '') as city,
-		COALESCE(NULLIF(address, NULL), '') as address,
-		COALESCE(NULLIF(phonenumber, NULL), '') as phonenumber,
-		COALESCE(NULLIF(ispetfirendly::text, ''), '') as ispetfirendly,
-		COALESCE(NULLIF(iskidfiendly::text, ''), '') as iskidfiendly,
-		COALESCE(NULLIF(issmokingallowed::text, ''), '') as issmokingallowed,
-		COALESCE(NULLIF(roomnumber, NULL), 0) as roomnumber
-		from members where username = $1`
-	testUsername := "testuser"
-	expectedUser := pb.ProfileDetailsResponse{
+	expectedUsername := "testuser"
+	expectedRows := sqlmock.NewRows([]string{
+		"email", "username", "firstname", "lastname", "birthdate", "state", "country", "gender",
+		"joiningdate", "ishost", "bio", "city", "address", "phonenumber", "ispetfirendly",
+		"iskidfiendly", "issmokingallowed", "roomnumber",
+	}).AddRow(
+		"test@example.com", expectedUsername, "John", "Doe", time.Now(), "State", "Country", 1,
+		time.Now(), "true", "Bio", "City", "Address", "1234567890", "Yes", "Yes", "No", 5,
+	)
+
+	mock.ExpectQuery("select").WithArgs(expectedUsername).WillReturnRows(expectedRows)
+
+	result, err := repo.GetUserDetails(expectedUsername)
+
+	if err != nil {
+		t.Fatalf("Unexpected error: %v", err)
+	}
+
+	expectedBirthDate := time.Now().Format("2006-01-02")
+	expectedJoiningDate := time.Now().Format("2006-01-02")
+
+	expectedResult := &pb.ProfileDetailsResponse{
 		Email:            "test@example.com",
-		UserName:         "testuser",
+		UserName:         expectedUsername,
 		FirstName:        "John",
 		LastName:         "Doe",
-		BirthDate:        "1990-01-01",
-		State:            "CA",
-		Country:          "USA",
+		BirthDate:        expectedBirthDate,
+		State:            "State",
+		Country:          "Country",
 		Gender:           1,
-		JoiningDate:      "2022-01-01",
+		JoiningDate:      expectedJoiningDate,
 		IsHost:           "true",
-		Bio:              "Some bio",
+		Bio:              "Bio",
 		City:             "City",
-		Address:          "123 Street",
-		PhoneNumber:      "123-456-7890",
-		IsPetFriendly:    "false",
-		IsKidFriendly:    "false",
-		IsSmokingAllowed: "false",
-		RoomNumber:       42,
+		Address:          "Address",
+		PhoneNumber:      "1234567890",
+		IsPetFriendly:    "Yes",
+		IsKidFriendly:    "Yes",
+		IsSmokingAllowed: "No",
+		RoomNumber:       5,
 	}
 
-	// Set up the mock expectations
-	mock.ExpectQuery(expectedQuery).
-		WithArgs(testUsername).
-		WillReturnRows(sqlmock.NewRows([]string{
-			"email", "username", "firstname", "lastname", "birthdate", "state", "country", "gender", "joiningdate", "ishost",
-			"bio", "city", "address", "phonenumber", "ispetfirendly", "iskidfiendly", "issmokingallowed", "roomnumber",
-		}).AddRow(
-			expectedUser.Email,
-			expectedUser.UserName,
-			expectedUser.FirstName,
-			expectedUser.LastName,
-			expectedUser.BirthDate,
-			expectedUser.State,
-			expectedUser.Country,
-			expectedUser.Gender,
-			expectedUser.JoiningDate,
-			expectedUser.IsHost,
-			expectedUser.Bio,
-			expectedUser.City,
-			expectedUser.Address,
-			expectedUser.PhoneNumber,
-			expectedUser.IsPetFriendly,
-			expectedUser.IsKidFriendly,
-			expectedUser.IsSmokingAllowed,
-			expectedUser.RoomNumber,
-		))
+	if !compareProfileDetails(result, expectedResult) {
+		t.Errorf("Unexpected result. Expected: %+v, Got: %+v", expectedResult, result)
+	}
 
-	// Call the method under test
-	_, _ = repo.GetUserDetails(testUsername)
-
-	// Assert that there were no errors
-	// assert.NoError(t, err)
-
-	// Assert that the returned user matches the expected user
-	// assert.Equal(t, expectedUser.Email, result.Email)
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("Unfulfilled expectations: %s", err)
+	}
 }
 
-func TestUpdateUserInformation(t *testing.T) {
+func compareProfileDetails(a, b *pb.ProfileDetailsResponse) bool {
+	return a.Email == b.Email &&
+		a.UserName == b.UserName &&
+		a.FirstName == b.FirstName &&
+		a.LastName == b.LastName &&
+		a.BirthDate == b.BirthDate &&
+		a.State == b.State &&
+		a.Country == b.Country &&
+		a.Gender == b.Gender &&
+		a.JoiningDate == b.JoiningDate &&
+		a.IsHost == b.IsHost &&
+		a.Bio == b.Bio &&
+		a.City == b.City &&
+		a.Address == b.Address &&
+		a.PhoneNumber == b.PhoneNumber &&
+		a.IsPetFriendly == b.IsPetFriendly &&
+		a.IsKidFriendly == b.IsKidFriendly &&
+		a.IsSmokingAllowed == b.IsSmokingAllowed &&
+		a.RoomNumber == b.RoomNumber
+}
+
+func TestPostgresRepository_UpdateUserInformation(t *testing.T) {
 	db, mock, err := sqlmock.New()
 	if err != nil {
-		t.Fatalf("Error creating mock database: %v", err)
+		t.Fatalf("Failed to initialize SQL mock: %v", err)
 	}
 	defer db.Close()
 
 	repo := &PostgresRepository{DB: db}
 
-	expectedHashedPassword, err := bcrypt.GenerateFromPassword([]byte("new_password"), bcrypt.MinCost)
-	if err != nil {
-		t.Fatalf("Error generating hashed password: %v", err)
-	}
-	expectedPassword := string(expectedHashedPassword)
-
-	expectedQuery := `update members set  
-		password = COALESCE(NULLIF($1, ''), password),
-		firstname = COALESCE(NULLIF($2, ''), firstname),
-		lastname = COALESCE(NULLIF($3, ''), lastname),
-		city = COALESCE(NULLIF($4, ''), city),
-		state = COALESCE(NULLIF($5, ''), state),
-		country = COALESCE(NULLIF($6, ''), country),
-		bio = COALESCE(NULLIF($7, ''), bio),
-		ishost = COALESCE(NULLIF($8, '')::boolean, ishost),
-		address = COALESCE(NULLIF($9, ''), address),
-		ispetfirendly = COALESCE(NULLIF($10, '')::boolean, ispetfirendly),
-		iskidfiendly = COALESCE(NULLIF($11, '')::boolean, iskidfiendly),
-		issmokingallowed = COALESCE(NULLIF($12, '')::boolean, issmokingallowed),
-		phonenumber = COALESCE(NULLIF($13, ''), phonenumber),
-		roomnumber = COALESCE(NULLIF($14, 0), roomnumber)
-		where username = $15`
-
-	expectedParams := []driver.Value{
-		driver.Value(expectedPassword),
-		driver.Value("NewFirstName"),
-		driver.Value("NewLastName"),
-		driver.Value("NewCity"),
-		driver.Value("NewState"),
-		driver.Value("NewCountry"),
-		driver.Value("NewBio"),
-		driver.Value("true"),
-		driver.Value("NewAddress"),
-		driver.Value("true"),
-		driver.Value("true"),
-		driver.Value("false"),
-		driver.Value("NewPhoneNumber"),
-		driver.Value(42),
-		driver.Value("test_username"),
-	}
-
-	mock.ExpectExec(expectedQuery).
-		WithArgs(expectedParams...).
-		WillReturnResult(sqlmock.NewResult(0, 1))
-
-	_ = repo.UpdateUserInformation("test_username", &pb.EditProfileRequest{
-		NewPassword:      "new_password",
-		FirstName:        "NewFirstName",
-		LastName:         "NewLastName",
-		City:             "NewCity",
-		State:            "NewState",
-		Country:          "NewCountry",
-		Bio:              "NewBio",
+	expectedUsername := "testuser"
+	userInfo := &pb.EditProfileRequest{
+		FirstName:        "John",
+		LastName:         "Doe",
+		City:             "New City",
+		State:            "New State",
+		Country:          "New Country",
+		Bio:              "New Bio",
 		IsHost:           "true",
-		Address:          "NewAddress",
-		IsPetFriendly:    "true",
-		IsKidFriendly:    "true",
-		IsSmokingAllowed: "false",
-		PhoneNumber:      "NewPhoneNumber",
+		Address:          "New Address",
+		IsPetFriendly:    "Yes",
+		IsKidFriendly:    "No",
+		IsSmokingAllowed: "Yes",
+		PhoneNumber:      "1234567890",
 		RoomNumber:       42,
-		CurrentPassword:  "current_password",
-	})
+	}
 
-	// if err != nil {
-	// 	t.Fatalf("Error updating user information: %v", err)
-	// }
+	mock.ExpectExec("update members").WithArgs(
+		sqlmock.AnyArg(),
+		userInfo.FirstName,
+		userInfo.LastName,
+		userInfo.City,
+		userInfo.State,
+		userInfo.Country,
+		userInfo.Bio,
+		userInfo.IsHost,
+		userInfo.Address,
+		userInfo.IsPetFriendly,
+		userInfo.IsKidFriendly,
+		userInfo.IsSmokingAllowed,
+		userInfo.PhoneNumber,
+		userInfo.RoomNumber,
+		expectedUsername,
+	).WillReturnResult(sqlmock.NewResult(0, 1))
 
-	// if err := mock.ExpectationsWereMet(); err != nil {
-	// 	t.Fatalf("Unfulfilled expectations: %s", err)
-	// }
+	userInfo.CurrentPassword = "current_password"
+	userInfo.NewPassword = "new_password"
+
+	mock.ExpectExec("update members").WithArgs(
+		sqlmock.AnyArg(),
+		userInfo.FirstName,
+		userInfo.LastName,
+		userInfo.City,
+		userInfo.State,
+		userInfo.Country,
+		userInfo.Bio,
+		userInfo.IsHost,
+		userInfo.Address,
+		userInfo.IsPetFriendly,
+		userInfo.IsKidFriendly,
+		userInfo.IsSmokingAllowed,
+		userInfo.PhoneNumber,
+		userInfo.RoomNumber,
+		expectedUsername,
+	).WillReturnResult(sqlmock.NewResult(0, 1))
+
+	err = repo.UpdateUserInformation(expectedUsername, userInfo)
+
+	if err != nil {
+		t.Fatalf("Unexpected error: %v", err)
+	}
 }
 
-func TestCheckUserExistance_UserExists(t *testing.T) {
+func TestPostgresRepository_CheckUserExistance(t *testing.T) {
 	db, mock, err := sqlmock.New()
 	if err != nil {
-		t.Fatalf("Error creating mock database: %v", err)
+		t.Fatalf("Failed to initialize SQL mock: %v", err)
 	}
 	defer db.Close()
 
 	repo := &PostgresRepository{DB: db}
 
-	expectedQuery := `select id from members where username = $1`
-	expectedUserName := "existing_user"
+	expectedUsername := "testuser"
 
-	mock.ExpectQuery(expectedQuery).
-		WithArgs(expectedUserName).
+	mock.ExpectQuery("select id from members where username = ?").
+		WithArgs(expectedUsername).
 		WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(1))
 
-	_, _ = repo.CheckUserExistance(expectedUserName)
+	result1, err1 := repo.CheckUserExistance(expectedUsername)
+	assert.True(t, result1, "Expected user to exist")
+	assert.Nil(t, err1, "Unexpected error")
 
-	// // Check for errors
-	// if err != nil {
-	// 	t.Fatalf("Error checking user existence: %v", err)
-	// }
-
-	// // Check if the user exists
-	// if !exists {
-	// 	t.Fatalf("Expected user to exist, but got false")
-	// }
-
-	// // Ensure all expectations were met
-	// if err := mock.ExpectationsWereMet(); err != nil {
-	// 	t.Fatalf("Unfulfilled expectations: %s", err)
-	// }
-}
-
-func TestCheckUserExistance_UserDoesNotExist(t *testing.T) {
-	db, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("Error creating mock database: %v", err)
-	}
-	defer db.Close()
-
-	repo := &PostgresRepository{DB: db}
-
-	expectedQuery := `select id from members where username = $1`
-	expectedUserName := "nonexistent_user"
-
-	mock.ExpectQuery(expectedQuery).
-		WithArgs(expectedUserName).
+	mock.ExpectQuery("select id from members where username = ?").
+		WithArgs(expectedUsername).
 		WillReturnError(sql.ErrNoRows)
 
-	_, _ = repo.CheckUserExistance(expectedUserName)
+	result2, err2 := repo.CheckUserExistance(expectedUsername)
+	assert.False(t, result2, "Expected user not to exist")
+	assert.Nil(t, err2, "Unexpected error")
 
-	// // Check for errors
-	// if err != nil {
-	// 	t.Fatalf("Error checking user existence: %v", err)
-	// }
+	mock.ExpectQuery("select id from members where username = ?").
+		WithArgs(expectedUsername).
+		WillReturnError(sql.ErrConnDone)
 
-	// // Check if the user does not exist
-	// if exists {
-	// 	t.Fatalf("Expected user to not exist, but got true")
-	// }
+	result3, err3 := repo.CheckUserExistance(expectedUsername)
+	assert.False(t, result3, "Expected user not to exist due to database error")
+	assert.EqualError(t, err3, sql.ErrConnDone.Error(), "Unexpected error")
 
-	// // Ensure all expectations were met
-	// if err := mock.ExpectationsWereMet(); err != nil {
-	// 	t.Fatalf("Unfulfilled expectations: %s", err)
-	// }
+	assert.Nil(t, mock.ExpectationsWereMet(), "Unfulfilled expectations")
 }
 
-func TestGetUserPassword_UserExists(t *testing.T) {
+func TestPostgresRepository_GetUserPassword(t *testing.T) {
 	db, mock, err := sqlmock.New()
 	if err != nil {
-		t.Fatalf("Error creating mock database: %v", err)
+		t.Fatalf("Failed to initialize SQL mock: %v", err)
 	}
 	defer db.Close()
 
 	repo := &PostgresRepository{DB: db}
 
-	expectedQuery := `select password from members where username = $1`
-	expectedUserName := "existing_user"
+	existingUserName := "existing_user"
 	expectedPassword := "hashed_password"
+	mock.ExpectQuery("select password from members").WithArgs(existingUserName).WillReturnRows(sqlmock.NewRows([]string{"password"}).AddRow(expectedPassword))
 
-	mock.ExpectQuery(expectedQuery).
-		WithArgs(expectedUserName).
-		WillReturnRows(sqlmock.NewRows([]string{"password"}).AddRow(expectedPassword)) // Assuming user exists with a password
+	nonExistingUserName := "non_existing_user"
+	mock.ExpectQuery("select password from members").WithArgs(nonExistingUserName).WillReturnError(sql.ErrNoRows)
 
-	_, _ = repo.GetUserPassword(expectedUserName)
+	password, err := repo.GetUserPassword(existingUserName)
 
-	// // Check for errors
-	// if err != nil {
-	// 	t.Fatalf("Error getting user password: %v", err)
-	// }
+	if err != nil {
+		t.Fatalf("Unexpected error: %v", err)
+	}
 
-	// // Check if the returned password matches the expected password
-	// if password != expectedPassword {
-	// 	t.Fatalf("Expected password %s, but got %s", expectedPassword, password)
-	// }
+	if password != expectedPassword {
+		t.Errorf("Expected password: %s, Got: %s", expectedPassword, password)
+	}
 
-	// // Ensure all expectations were met
-	// if err := mock.ExpectationsWereMet(); err != nil {
-	// 	t.Fatalf("Unfulfilled expectations: %s", err)
-	// }
+	password, err = repo.GetUserPassword(nonExistingUserName)
+
+	if err != sql.ErrNoRows {
+		t.Errorf("Expected sql.ErrNoRows, Got: %v", err)
+	}
+
+	if password != "" {
+		t.Errorf("Expected empty string for password, Got: %s", password)
+	}
+
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("Unfulfilled expectations: %s", err)
+	}
 }
 
-func TestGetUserPassword_UserDoesNotExist(t *testing.T) {
-	// Create a new mock database connection
+func TestPostgresRepository_GetPublicProfile(t *testing.T) {
 	db, mock, err := sqlmock.New()
 	if err != nil {
-		t.Fatalf("Error creating mock database: %v", err)
+		t.Fatalf("Failed to initialize SQL mock: %v", err)
 	}
 	defer db.Close()
 
-	// Create a new PostgresRepository with the mock DB
-	repo := &PostgresRepository{
-		DB: db,
-	}
+	repo := &PostgresRepository{DB: db}
 
-	// Set up the expected SQL query and parameters
-	expectedQuery := `select password from members where username = $1`
-	expectedUserName := "nonexistent_user"
+	expectedUsername := "testuser"
+	expectedRows := sqlmock.NewRows([]string{
+		"id", "email", "username", "firstname", "lastname", "birthdate", "state", "country", "gender", "joiningdate", "bio", "city",
+	}).AddRow(
+		1, "test@example.com", expectedUsername, "John", "Doe", time.Now(), "State", "Country", 1, time.Now(), "Bio", "City",
+	)
 
-	// Set up the mock expectations
-	mock.ExpectQuery(expectedQuery).
-		WithArgs(expectedUserName).
-		WillReturnError(sql.ErrNoRows) // Assuming user does not exist
+	mock.ExpectQuery("select id, email, username, firstname, lastname, birthdate, state, country, gender, joiningdate, COALESCE(NULLIF(bio, NULL), '') as bio, COALESCE(NULLIF(city, NULL), '') as city from members where username = ?").
+		WithArgs(expectedUsername).
+		WillReturnRows(expectedRows)
 
-	// Call the function to test
-	_, _ = repo.GetUserPassword(expectedUserName)
+	_, _, _ = repo.GetPublicProfile(expectedUsername)
 
-	// // Check for errors
-	// if err != sql.ErrNoRows {
-	// 	t.Fatalf("Expected ErrNoRows for nonexistent user, but got: %v", err)
-	// }
+	expectedBirthDate := time.Now().Format("2006-01-02")
+	expectedJoiningDate := time.Now().Format("2006-01-02")
 
-	// // Check if the returned password is an empty string
-	// if password != "" {
-	// 	t.Fatalf("Expected empty password for nonexistent user, but got %s", password)
-	// }
-
-	// // Ensure all expectations were met
-	// if err := mock.ExpectationsWereMet(); err != nil {
-	// 	t.Fatalf("Unfulfilled expectations: %s", err)
-	// }
-}
-
-func TestGetPublicProfile_UserExists(t *testing.T) {
-	// Create a new mock database connection
-	db, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("Error creating mock database: %v", err)
-	}
-	defer db.Close()
-
-	// Create a new PostgresRepository with the mock DB
-	repo := &PostgresRepository{
-		DB: db,
-	}
-
-	// Set up the expected SQL query and parameters
-	expectedQuery := `select id ,email, username, firstname, lastname, birthdate, state, country, gender, joiningdate, 
-			COALESCE(NULLIF(bio, NULL), '') as bio,
-			COALESCE(NULLIF(city, NULL), '') as city
-			from members where username = $1`
-	expectedUserName := "existing_user"
-
-	// Set up the mock expectations
-	mock.ExpectQuery(expectedQuery).
-		WithArgs(expectedUserName).
-		WillReturnRows(sqlmock.NewRows([]string{"id", "email", "username", "firstname", "lastname", "birthdate", "state", "country", "gender", "joiningdate", "bio", "city"}).
-			AddRow(1, "test@example.com", "existing_user", "John", "Doe", time.Now(), "California", "USA", 1, time.Now(), "This is a bio", "City"))
-
-	// Call the function to test
-	_, _, _ = repo.GetPublicProfile(expectedUserName)
-
-	// // Check for errors
-	// if err != nil {
-	// 	t.Fatalf("Error getting public profile: %v", err)
-	// }
-
-	// Check if the returned user details are as expected
 	_ = &pb.PublicProfileResponse{
 		Email:       "test@example.com",
-		UserName:    "existing_user",
+		UserName:    expectedUsername,
 		FirstName:   "John",
 		LastName:    "Doe",
-		BirthDate:   time.Now().Format("2006-01-02"),
-		State:       "California",
-		Country:     "USA",
+		BirthDate:   expectedBirthDate,
+		State:       "State",
+		Country:     "Country",
 		Gender:      1,
-		JoiningDate: time.Now().Format("2006-01-02"),
-		Bio:         "This is a bio",
+		JoiningDate: expectedJoiningDate,
+		Bio:         "Bio",
 		City:        "City",
 	}
-
-	// if !proto.Equal(user, expectedUser) {
-	// 	t.Fatalf("Returned user details do not match expected details")
-	// }
-
-	// // Check if the returned ID is as expected
-	// if id != 1 {
-	// 	t.Fatalf("Expected ID 1, but got %d", id)
-	// }
-
-	// // Ensure all expectations were met
-	// if err := mock.ExpectationsWereMet(); err != nil {
-	// 	t.Fatalf("Unfulfilled expectations: %s", err)
-	// }
 }
 
-func TestGetPublicProfile_UserDoesNotExist(t *testing.T) {
-	// Create a new mock database connection
+func TestPostgresRepository_GetPublicProfileHost(t *testing.T) {
 	db, mock, err := sqlmock.New()
 	if err != nil {
-		t.Fatalf("Error creating mock database: %v", err)
+		t.Fatalf("Failed to initialize SQL mock: %v", err)
 	}
 	defer db.Close()
 
-	// Create a new PostgresRepository with the mock DB
-	repo := &PostgresRepository{
-		DB: db,
-	}
-
-	// Set up the expected SQL query and parameters
-	expectedQuery := `select id ,email, username, firstname, lastname, birthdate, state, country, gender, joiningdate, 
-			COALESCE(NULLIF(bio, NULL), '') as bio,
-			COALESCE(NULLIF(city, NULL), '') as city
-			from members where username = $1`
-	expectedUserName := "nonexistent_user"
-
-	// Set up the mock expectations
-	mock.ExpectQuery(expectedQuery).
-		WithArgs(expectedUserName).
-		WillReturnError(sql.ErrNoRows) // Assuming user does not exist
-
-	// Call the function to test
-	_, _, _ = repo.GetPublicProfile(expectedUserName)
-
-	// // Check for errors
-	// if err != sql.ErrNoRows {
-	// 	t.Fatalf("Expected ErrNoRows for nonexistent user, but got: %v", err)
-	// }
-
-	// // Check if the returned user is nil
-	// if user != nil {
-	// 	t.Fatalf("Expected nil user for nonexistent user, but got: %v", user)
-	// }
-
-	// // Check if the returned ID is 0
-	// if id != 0 {
-	// 	t.Fatalf("Expected ID 0 for nonexistent user, but got %d", id)
-	// }
-
-	// // Ensure all expectations were met
-	// if err := mock.ExpectationsWereMet(); err != nil {
-	// 	t.Fatalf("Unfulfilled expectations: %s", err)
-	// }
-}
-
-func TestCheckIfUserCanViewProfile(t *testing.T) {
-	// Create a new mock database connection
-	db, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("Failed to create mock database: %v", err)
-	}
-	defer db.Close()
-
-	// Create an instance of your repository with the mock database
 	repo := &PostgresRepository{DB: db}
 
-	// Set up expectations for the mock database queries
-	rows := sqlmock.NewRows([]string{"announcement_id"}).
-		AddRow(1).
-		AddRow(2)
+	expectedGuestID := 1
+	expectedHostUsername := "testhost"
+	expectedHostID := 2
+	expectedRows := sqlmock.NewRows([]string{
+		"email", "username", "firstname", "lastname", "birthdate", "state", "country", "gender", "joiningdate",
+		"ishost", "bio", "city", "address", "phonenumber", "ispetfirendly", "iskidfiendly", "issmokingallowed", "roomnumber",
+	}).AddRow(
+		"host@example.com", expectedHostUsername, "Host", "User", time.Now(), "State", "Country", 1, time.Now(),
+		"true", "Host Bio", "Host City", "Host Address", "1234567890", "Yes", "Yes", "No", 5,
+	)
 
-	mock.ExpectQuery("select announcement_id from announcement_offer where host_id = \\$1").
-		WithArgs(123).
-		WillReturnRows(rows)
+	mock.ExpectQuery("select id from members where username = ?").
+		WithArgs(expectedHostUsername).
+		WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(expectedHostID))
 
-	rows = sqlmock.NewRows([]string{"user_id"}).
-		AddRow(123)
+	mock.ExpectQuery(".*").
+		WillReturnRows(sqlmock.NewRows([]string{"announcement_id"}).AddRow(1))
 
-	mock.ExpectQuery("select user_id from announcement where id = \\$1 and user_id = \\$2").
-		WithArgs(1, 123).
-		WillReturnRows(rows)
+	mock.ExpectQuery("select email, username, firstname, lastname, birthdate, state, country, gender, joiningdate, ishost, COALESCE(NULLIF(bio, NULL), '') as bio, COALESCE(NULLIF(city, NULL), '') as city, COALESCE(NULLIF(address, NULL), '') as address, COALESCE(NULLIF(phonenumber, NULL), '') as phonenumber, COALESCE(NULLIF(ispetfirendly::text, ''), '') as ispetfirendly, COALESCE(NULLIF(iskidfiendly::text, ''), '') as iskidfiendly, COALESCE(NULLIF(issmokingallowed::text, ''), '') as issmokingallowed, COALESCE(NULLIF(roomnumber, NULL), 0) as roomnumber from members where username = ?").
+		WithArgs(expectedHostUsername).
+		WillReturnRows(expectedRows)
 
-	// Call the function being tested
-	_, _ = repo.CheckIfUserCanViewProfile(123, 456)
+	_, _, _ = repo.GetPublicProfileHost(expectedGuestID, expectedHostUsername)
 
-	// Assert the results
-	// assert.NoError(t, mock.ExpectationsWereMet()) // Check if all expected queries were executed
-	// assert.NoError(t, err)                         // Check if there were no errors during the function execution
-	// assert.True(t, canView)                        // Check if the user can view the profile as expected
+	expectedBirthDate := time.Now().Format("2006-01-02")
+	expectedJoiningDate := time.Now().Format("2006-01-02")
+
+	_ = &pb.PublicProfileHostResponse{
+		Email:            "host@example.com",
+		UserName:         expectedHostUsername,
+		FirstName:        "Host",
+		LastName:         "User",
+		BirthDate:        expectedBirthDate,
+		State:            "State",
+		Country:          "Country",
+		Gender:           1,
+		JoiningDate:      expectedJoiningDate,
+		IsHost:           "true",
+		Bio:              "Host Bio",
+		City:             "Host City",
+		Address:          "Host Address",
+		PhoneNumber:      "1234567890",
+		IsPetFriendly:    "Yes",
+		IsKidFriendly:    "Yes",
+		IsSmokingAllowed: "No",
+		RoomNumber:       5,
+	}
 }
 
-func TestGetIdFromUsername(t *testing.T) {
-	// Create a new mock database connection
+func TestPostgresRepository_CheckIfUserCanViewProfile(t *testing.T) {
 	db, mock, err := sqlmock.New()
 	if err != nil {
-		t.Fatalf("Failed to create mock database: %v", err)
+		t.Fatalf("Failed to initialize SQL mock: %v", err)
 	}
 	defer db.Close()
 
-	// Create an instance of your repository with the mock database
 	repo := &PostgresRepository{DB: db}
 
-	// Set up expectations for the mock database query
-	rows := sqlmock.NewRows([]string{"id"}).
-		AddRow(123)
+	expectedGuestID := 1
+	expectedHostID := 2
+	expectedRows := sqlmock.NewRows([]string{"announcement_id"}).AddRow(1)
 
-	mock.ExpectQuery("select id from members where username = \\$1").
-		WithArgs("testuser").
-		WillReturnRows(rows)
+	mock.ExpectQuery("select announcement_id from announcement_offer where host_id = ?").
+		WithArgs(expectedHostID).
+		WillReturnRows(expectedRows)
 
-	// Call the function being tested
-	userID, err := repo.GetIdFromUsername("testuser")
+	mock.ExpectQuery("select user_id from announcement where id = ? and user_id = ?").
+		WithArgs(1, expectedGuestID).
+		WillReturnRows(sqlmock.NewRows([]string{"user_id"}).AddRow(expectedGuestID))
 
-	// Assert the results
-	assert.NoError(t, mock.ExpectationsWereMet()) // Check if the expected query was executed
-	assert.NoError(t, err)                        // Check if there were no errors during the function execution
-	assert.Equal(t, 123, userID)                  // Check if the returned user ID is as expected
+	_, _ = repo.CheckIfUserCanViewProfile(expectedGuestID, expectedHostID)
 }
 
-func TestInsertChatList(t *testing.T) {
-	// Create a new mock database connection
+func TestPostgresRepository_GetIdFromUsername(t *testing.T) {
 	db, mock, err := sqlmock.New()
 	if err != nil {
-		t.Fatalf("Failed to create mock database: %v", err)
+		t.Fatalf("Failed to initialize SQL mock: %v", err)
 	}
 	defer db.Close()
 
-	// Create an instance of your repository with the mock database
 	repo := &PostgresRepository{DB: db}
 
-	// Set up expectations for the mock database query
-	mock.ExpectExec("insert into chatlist \\(host_id , guest_id , announcement_id \\)values \\(\\$1 , \\$2 , \\$3 \\)").
-		WithArgs(123, 456, 789).
-		WillReturnResult(sqlmock.NewResult(1, 1)) // Assuming one row was affected
+	expectedUsername := "testuser"
 
-	// Call the function being tested
-	err = repo.InsertChatList(123, 456, 789)
+	mock.ExpectQuery("select id from members where username = ?").
+		WithArgs(expectedUsername).
+		WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(1))
 
-	// Assert the results
-	assert.NoError(t, mock.ExpectationsWereMet()) // Check if the expected query was executed
-	assert.NoError(t, err)                        // Check if there were no errors during the function execution
+	result1, err1 := repo.GetIdFromUsername(expectedUsername)
+	assert.Equal(t, 1, result1, "Expected user ID to be 1")
+	assert.Nil(t, err1, "Unexpected error")
+
+	mock.ExpectQuery("select id from members where username = ?").
+		WithArgs(expectedUsername).
+		WillReturnError(sql.ErrNoRows)
+
+	result2, err2 := repo.GetIdFromUsername(expectedUsername)
+	assert.Equal(t, -1, result2, "Expected user ID to be -1")
+	assert.EqualError(t, err2, sql.ErrNoRows.Error(), "Expected error to be sql.ErrNoRows")
+
+	mock.ExpectQuery("select id from members where username = ?").
+		WithArgs(expectedUsername).
+		WillReturnError(sql.ErrConnDone)
+
+	result3, err3 := repo.GetIdFromUsername(expectedUsername)
+	assert.Equal(t, -1, result3, "Expected user ID to be -1")
+	assert.EqualError(t, err3, sql.ErrConnDone.Error(), "Expected error to be sql.ErrConnDone")
+
+	assert.Nil(t, mock.ExpectationsWereMet(), "Unfulfilled expectations")
 }
 
-func TestGetUserNameByID(t *testing.T) {
-	// Create a new mock database connection
+func TestPostgresRepository_InsertChatList(t *testing.T) {
 	db, mock, err := sqlmock.New()
 	if err != nil {
-		t.Fatalf("Failed to create mock database: %v", err)
+		t.Fatalf("Failed to initialize SQL mock: %v", err)
 	}
 	defer db.Close()
 
-	// Create an instance of your repository with the mock database
 	repo := &PostgresRepository{DB: db}
 
-	// Set up expectations for the mock database query
-	rows := sqlmock.NewRows([]string{"username"}).
-		AddRow("TestUser")
+	expectedHostID := 1
+	expectedGuestID := 2
+	expectedAnnouncementID := 3
 
-	mock.ExpectQuery("select username from members where id = \\$1").
-		WithArgs(123).
-		WillReturnRows(rows)
+	mock.ExpectExec("insert into chatlist").
+		WithArgs(expectedHostID, expectedGuestID, expectedAnnouncementID).
+		WillReturnResult(sqlmock.NewResult(1, 1))
 
-	// Call the function being tested
-	username, err := repo.GetUserNameByID(123)
+	err = repo.InsertChatList(expectedHostID, expectedGuestID, expectedAnnouncementID)
 
-	// Assert the results
-	assert.NoError(t, mock.ExpectationsWereMet()) // Check if the expected query was executed
-	assert.NoError(t, err)                         // Check if there were no errors during the function execution
-	assert.Equal(t, "TestUser", username)          // Check if the returned username is as expected
+	if err != nil {
+		t.Fatalf("Unexpected error: %v", err)
+	}
+
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("Unfulfilled expectations: %s", err)
+	}
+}
+
+func TestPostgresRepository_GetChatList(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("Failed to initialize SQL mock: %v", err)
+	}
+	defer db.Close()
+
+	repo := &PostgresRepository{DB: db}
+
+	expectedGuestID := 1
+	expectedRows := sqlmock.NewRows([]string{"id", "host_id", "guest_id", "announcement_id"}).
+		AddRow(1, 2, expectedGuestID, 3).
+		AddRow(2, expectedGuestID, 4, 5)
+
+	mock.ExpectQuery("select id, host_id, guest_id, announcement_id from chatlist where guest_id = ? or host_id = ?").
+		WithArgs(expectedGuestID, expectedGuestID).
+		WillReturnRows(expectedRows)
+
+	mockObj := new(s3.S3)
+
+	_, _ = repo.GetChatList(expectedGuestID, mockObj)
+
+	_ = &pb.ChatListResponse{
+		Users: []*pb.ChatList{
+			{
+				ID:            1,
+				IsHost:        "no",
+				HostID:        2,
+				Username:      "mocked_username",
+				AnnoucementId: 3,
+				Image:         "mocked_image_url",
+			},
+			{
+				ID:            2,
+				IsHost:        "yes",
+				HostID:        4,
+				Username:      "mocked_username",
+				AnnoucementId: 5,
+				Image:         "mocked_image_url",
+			},
+		},
+	}
+}
+
+func TestPostgresRepository_GetUserNameByID(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("Failed to initialize SQL mock: %v", err)
+	}
+	defer db.Close()
+
+	repo := &PostgresRepository{DB: db}
+
+	expectedUserID := 1
+	expectedUsername := "testuser"
+
+	mock.ExpectQuery("select username from members where id = ?").
+		WithArgs(expectedUserID).
+		WillReturnRows(sqlmock.NewRows([]string{"username"}).AddRow(expectedUsername))
+
+	result, err := repo.GetUserNameByID(expectedUserID)
+
+	assert.Nil(t, err, "Unexpected error")
+
+	assert.Equal(t, expectedUsername, result, "Unexpected username")
+
+	assert.Nil(t, mock.ExpectationsWereMet(), "Unfulfilled expectations")
 }
