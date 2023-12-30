@@ -208,6 +208,15 @@ message hostInfoForCreatePostResponse {
     string HostUsername = 2;
     string Message = 3;
 }
+message uploadBlogImageRequest {
+    string AccessToken = 1;
+    bytes ImageData = 2;
+    int32 BlogID = 3;
+}
+
+message uploadBlogImageResponse {
+    string Message = 1;
+}
 
 
 service Announcement {
@@ -226,4 +235,5 @@ service Announcement {
     rpc EditPost(editPostRequest) returns (editPostResponse);
     rpc UploadHostHouseImage(hostHouseImageRequest) returns (hostHouseImageResponse);
     rpc HostInfo(hostInfoForCreatePostRequest) returns (hostInfoForCreatePostResponse);
+    rpc UploadBlogImage(uploadBlogImageRequest) returns (uploadBlogImageResponse);
 }
