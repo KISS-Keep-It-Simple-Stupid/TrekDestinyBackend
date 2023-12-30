@@ -24,4 +24,5 @@ type Repository interface {
 	UpdateAnnouncementInformation(announcementInfo *pb.EditAnnouncementRequest) error
 	DeleteAnnouncement(announcement_id int) error
 	UpdatePostInformation(postInfo *pb.EditPostRequest) error
+	GetHostId(announcement_id int) (int, error)
 }

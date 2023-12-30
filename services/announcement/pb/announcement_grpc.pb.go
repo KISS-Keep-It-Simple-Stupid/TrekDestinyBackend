@@ -36,6 +36,7 @@ type AnnouncementClient interface {
 	DeleteAnnouncement(ctx context.Context, in *DeleteAnnouncementRequest, opts ...grpc.CallOption) (*DeleteAnnouncementResponse, error)
 	EditPost(ctx context.Context, in *EditPostRequest, opts ...grpc.CallOption) (*EditPostResponse, error)
 	UploadHostHouseImage(ctx context.Context, in *HostHouseImageRequest, opts ...grpc.CallOption) (*HostHouseImageResponse, error)
+	HostInfo(ctx context.Context, in *HostInfoForCreatePostRequest, opts ...grpc.CallOption) (*HostInfoForCreatePostResponse, error)
 }
 
 type announcementClient struct {
@@ -172,6 +173,15 @@ func (c *announcementClient) UploadHostHouseImage(ctx context.Context, in *HostH
 	return out, nil
 }
 
+func (c *announcementClient) HostInfo(ctx context.Context, in *HostInfoForCreatePostRequest, opts ...grpc.CallOption) (*HostInfoForCreatePostResponse, error) {
+	out := new(HostInfoForCreatePostResponse)
+	err := c.cc.Invoke(ctx, "/Announcement/HostInfo", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // AnnouncementServer is the server API for Announcement service.
 // All implementations must embed UnimplementedAnnouncementServer
 // for forward compatibility
@@ -190,6 +200,7 @@ type AnnouncementServer interface {
 	DeleteAnnouncement(context.Context, *DeleteAnnouncementRequest) (*DeleteAnnouncementResponse, error)
 	EditPost(context.Context, *EditPostRequest) (*EditPostResponse, error)
 	UploadHostHouseImage(context.Context, *HostHouseImageRequest) (*HostHouseImageResponse, error)
+	HostInfo(context.Context, *HostInfoForCreatePostRequest) (*HostInfoForCreatePostResponse, error)
 	mustEmbedUnimplementedAnnouncementServer()
 }
 
@@ -238,6 +249,9 @@ func (UnimplementedAnnouncementServer) EditPost(context.Context, *EditPostReques
 }
 func (UnimplementedAnnouncementServer) UploadHostHouseImage(context.Context, *HostHouseImageRequest) (*HostHouseImageResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UploadHostHouseImage not implemented")
+}
+func (UnimplementedAnnouncementServer) HostInfo(context.Context, *HostInfoForCreatePostRequest) (*HostInfoForCreatePostResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method HostInfo not implemented")
 }
 func (UnimplementedAnnouncementServer) mustEmbedUnimplementedAnnouncementServer() {}
 
@@ -504,6 +518,24 @@ func _Announcement_UploadHostHouseImage_Handler(srv interface{}, ctx context.Con
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Announcement_HostInfo_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(HostInfoForCreatePostRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AnnouncementServer).HostInfo(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/Announcement/HostInfo",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AnnouncementServer).HostInfo(ctx, req.(*HostInfoForCreatePostRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Announcement_ServiceDesc is the grpc.ServiceDesc for Announcement service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -566,6 +598,10 @@ var Announcement_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "UploadHostHouseImage",
 			Handler:    _Announcement_UploadHostHouseImage_Handler,
+		},
+		{
+			MethodName: "HostInfo",
+			Handler:    _Announcement_HostInfo_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

@@ -516,3 +516,39 @@ func (s *Repository) UploadHostHouseImage(ctx context.Context, r *pb.HostHouseIm
 	}
 	return resp, nil
 }
+
+func (s *Repository) HostInfo(ctx context.Context, r *pb.HostInfoForCreatePostRequest) (*pb.HostInfoForCreatePostResponse, error) {
+	_, err := helper.DecodeToken(r.AccessToken)
+	if err != nil {
+		resp := &pb.HostInfoForCreatePostResponse{
+			Message: "User is UnAuthorized - announcement service",
+		}
+		return resp, nil
+	}
+
+	host_id, err := s.DB.GetHostId(int(r.AnnouncementId))
+	if err != nil {
+		log.Println(err.Error())
+		err := errors.New("internal error while getting host id - announcement service")
+		return nil, err
+	}
+
+	resp := &pb.HostInfoForCreatePostResponse{}
+
+	resp.HostUsername, err = s.DB.GetUsernameFromId(host_id)
+	if err != nil {
+		log.Println(err.Error())
+		err := errors.New("internal error while getting username from id - announcement service")
+		return nil, err
+	}
+
+	resp.HostImage, err = helper.GetImageURL(s.S3, fmt.Sprintf("user-%d", host_id))
+	if err != nil {
+		log.Println(err.Error())
+		err := errors.New("internal error while getting host image from object storage - announcement service")
+		return nil, err
+	}
+
+	resp.Message = "success"
+	return resp, nil
+}

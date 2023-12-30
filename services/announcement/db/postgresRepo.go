@@ -506,3 +506,15 @@ func (s *PostgresRepository) UpdatePostInformation(postInfo *pb.EditPostRequest)
 		postInfo.PostId)
 	return err
 }
+
+func (s *PostgresRepository) GetHostId(announcement_id int) (int, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
+	defer cancel()
+	var host_id int
+	query := `select main_host from announcement where id = $1`
+	err := s.DB.QueryRowContext(ctx, query, announcement_id).Scan(&host_id)
+	if err != nil {
+		return -1, err
+	}
+	return host_id, err
+}

@@ -198,6 +198,17 @@ message hostHouseImageResponse {
     string Message = 1;
 }
 
+message hostInfoForCreatePostRequest {
+    string AccessToken = 1;
+    int32 AnnouncementId = 2;
+}
+
+message hostInfoForCreatePostResponse {
+    string HostImage = 1;
+    string HostUsername = 2;
+    string Message = 3;
+}
+
 
 service Announcement {
     rpc CreateCard(createCardRequest) returns (createCardResponse);
@@ -214,4 +225,5 @@ service Announcement {
     rpc DeleteAnnouncement(deleteAnnouncementRequest) returns (deleteAnnouncementResponse);
     rpc EditPost(editPostRequest) returns (editPostResponse);
     rpc UploadHostHouseImage(hostHouseImageRequest) returns (hostHouseImageResponse);
+    rpc HostInfo(hostInfoForCreatePostRequest) returns (hostInfoForCreatePostResponse);
 }
