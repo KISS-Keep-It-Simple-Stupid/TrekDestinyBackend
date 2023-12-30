@@ -516,23 +516,15 @@ func (s *Repository) UploadHostHouseImage(ctx context.Context, r *pb.HostHouseIm
 	}
 	return resp, nil
 }
-<<<<<<< HEAD
 
 func (s *Repository) HostInfo(ctx context.Context, r *pb.HostInfoForCreatePostRequest) (*pb.HostInfoForCreatePostResponse, error) {
 	_, err := helper.DecodeToken(r.AccessToken)
 	if err != nil {
 		resp := &pb.HostInfoForCreatePostResponse{
-=======
-func (s *Repository) UploadBlogImage(ctx context.Context, r *pb.UploadBlogImageRequest) (*pb.UploadBlogImageResponse, error) {
-	_, err := helper.DecodeToken(r.AccessToken)
-	if err != nil {
-		resp := &pb.UploadBlogImageResponse{
->>>>>>> FB_UploadImages
 			Message: "User is UnAuthorized - announcement service",
 		}
 		return resp, nil
 	}
-<<<<<<< HEAD
 
 	host_id, err := s.DB.GetHostId(int(r.AnnouncementId))
 	if err != nil {
@@ -560,7 +552,15 @@ func (s *Repository) UploadBlogImage(ctx context.Context, r *pb.UploadBlogImageR
 	resp.Message = "success"
 	return resp, nil
 }
-=======
+
+func (s *Repository) UploadBlogImage(ctx context.Context, r *pb.UploadBlogImageRequest) (*pb.UploadBlogImageResponse, error) {
+	_, err := helper.DecodeToken(r.AccessToken)
+	if err != nil {
+		resp := &pb.UploadBlogImageResponse{
+			Message: "User is UnAuthorized - announcement service",
+		}
+		return resp, nil
+	}
 	bucketName := viper.Get("OBJECT_STORAGE_BUCKET_NAME").(string)
 	_, err = s.S3.PutObject(&s3.PutObjectInput{
 		Bucket:             aws.String(bucketName),
@@ -581,4 +581,3 @@ func (s *Repository) UploadBlogImage(ctx context.Context, r *pb.UploadBlogImageR
 	}
 	return resp, nil
 }
->>>>>>> FB_UploadImages
