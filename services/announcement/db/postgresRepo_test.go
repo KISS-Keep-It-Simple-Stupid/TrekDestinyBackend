@@ -470,7 +470,7 @@ func TestRejectUserAsHost(t *testing.T) {
 		WithArgs(offerInfo.AnnouncementId, offerInfo.HostId).
 		WillReturnResult(sqlmock.NewResult(0, 1))
 
-	err = repo.RejectUserAsHost(offerInfo)
+	err = repo.RejectUserOffer(offerInfo)
 
 	assert.NoError(t, err)
 

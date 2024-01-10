@@ -20,10 +20,11 @@ type Repository interface {
 	GetMyPostDetails(guest_id int) (*pb.GetMyPostResponse, error)
 	GetPostHostDetails(host_id int) (*pb.GetPostHostResponse, error)
 	AcceptUserAsHost(offerInfo *pb.AcceptOfferRequest) (error)
-	RejectUserAsHost(offerInfo *pb.RejectOfferRequest) (error)
+	RejectUserOffer(offerInfo *pb.RejectOfferRequest) (error)
 	UpdateAnnouncementInformation(announcementInfo *pb.EditAnnouncementRequest) error
 	DeleteAnnouncement(announcement_id int) error
 	UpdatePostInformation(postInfo *pb.EditPostRequest) error
 	GetHostId(announcement_id int) (int, error)
 	UpdateHostImagesCount(user_id , imageCount int) error
+	DeleteUserChatList(announcement_id , host_id int) error
 }

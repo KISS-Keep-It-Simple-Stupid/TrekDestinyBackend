@@ -433,7 +433,7 @@ func (s *PostgresRepository) AcceptUserAsHost(offerInfo *pb.AcceptOfferRequest) 
 	return nil
 }
 
-func (s *PostgresRepository) RejectUserAsHost(offerInfo *pb.RejectOfferRequest) error {
+func (s *PostgresRepository) RejectUserOffer(offerInfo *pb.RejectOfferRequest) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
 	defer cancel()
 	query := `delete from announcement_offer where announcement_id = $1 and host_id = $2`
@@ -491,6 +491,11 @@ func (s *PostgresRepository) DeleteAnnouncement(announcement_id int) error {
 	}
 	query = `delete from announcement where id = $1`
 	_, err = s.DB.ExecContext(ctx, query, announcement_id)
+	if err != nil {
+		return err
+	}
+	query = `delete from chatlist where announcement_id = $1`
+	_, err = s.DB.ExecContext(ctx, query, announcement_id)
 	return err
 }
 
@@ -528,4 +533,15 @@ func (s *PostgresRepository) UpdateHostImagesCount(user_id, imageCount int) erro
 	query := `update members set hostImageCount=$1 where id=$2`
 	_, err := s.DB.ExecContext(ctx, query, imageCount, user_id)
 	return err
+}
+
+func (s *PostgresRepository) DeleteUserChatList(announcement_id, host_id int) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
+	defer cancel()
+	query := `delete from chatlist where announcement_id = $1 and host_id = $2`
+	_, err := s.DB.ExecContext(ctx, query, announcement_id, host_id)
+	if err != nil {
+		return err
+	}
+	return nil
 }

@@ -387,13 +387,19 @@ func (s *Repository) RejectOffer(ctx context.Context, r *pb.RejectOfferRequest) 
 		return resp, nil
 	}
 
-	err = s.DB.RejectUserAsHost(r)
+	err = s.DB.RejectUserOffer(r)
 	if err != nil {
 		respErr := errors.New("internal server error while rejecting offer - announcement service")
 		log.Println(err)
 		return nil, respErr
 	}
 
+	err = s.DB.DeleteUserChatList(int(r.AnnouncementId), int(r.HostId))
+	if err != nil {
+		respErr := errors.New("internal server error while cleaning the chatlist after announcment deletion - announcement service")
+		log.Println(err)
+		return nil, respErr
+	}
 	resp := pb.RejectOfferResponse{
 		Message: "success",
 	}
