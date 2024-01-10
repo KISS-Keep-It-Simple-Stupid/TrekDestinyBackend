@@ -333,3 +333,12 @@ func (s *PostgresRepository) GetUserNameByID(user_id int) (string, error) {
 	err := s.DB.QueryRowContext(ctx, query, user_id).Scan(&username)
 	return username, err
 }
+
+func (s *PostgresRepository) GetHouseImagesCount(user_id int) (int, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
+	defer cancel()
+	query := `select hostImageCount from members where id = $1`
+	count := 0
+	err := s.DB.QueryRowContext(ctx, query, user_id).Scan(&count)
+	return count, err
+}

@@ -495,6 +495,12 @@ func (s *Repository) UploadHostHouseImage(ctx context.Context, r *pb.HostHouseIm
 			return nil, err
 		}
 	}
+	err = s.DB.UpdateHostImagesCount(claims.UserID, len(r.ImageData))
+	if err != nil {
+		log.Println(err.Error())
+		err := errors.New("internal error while updating the count of the host images of user in database - announcement service")
+		return nil, err
+	}
 	for i := 0; i < len(r.ImageData); i++ {
 		_, err = s.S3.PutObject(&s3.PutObjectInput{
 			Bucket:             aws.String(bucketName),
