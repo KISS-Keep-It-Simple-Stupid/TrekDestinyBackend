@@ -68,6 +68,7 @@ message OfferRecord {
     string HostLastName = 3;
     string HostUsername = 4;
     string Image = 5;
+    int32 status = 6;
 }
 
 message getOfferResponse {

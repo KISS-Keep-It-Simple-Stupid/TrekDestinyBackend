@@ -125,16 +125,12 @@ func (s *Repository) GetOffer(w http.ResponseWriter, r *http.Request) {
 	}
 	reqToken = splitToken[1]
 	getofferReq := &announcement_pb.GetOfferRequest{}
-	postData, err := io.ReadAll(r.Body)
+	announcement_id, err := strconv.Atoi(r.URL.Query().Get("announcement_id"))
 	if err != nil {
-		helpers.MessageGenerator(w, "wrong post body format", http.StatusBadRequest)
+		helpers.MessageGenerator(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	err = json.Unmarshal(postData, getofferReq)
-	if err != nil {
-		helpers.MessageGenerator(w, "wrong post body fields", http.StatusBadRequest)
-		return
-	}
+	getofferReq.AnnouncementId = int32(announcement_id)
 	getofferReq.AccessToken = reqToken
 	resp, err := s.announcement_client.GetOffer(context.Background(), getofferReq)
 	if err != nil {

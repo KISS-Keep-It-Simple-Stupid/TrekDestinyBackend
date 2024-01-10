@@ -16,4 +16,5 @@ type Repository interface {
 	InsertChatList(host_id, guest_id, announcement_id int) error
 	GetChatList(guest_id int, obj *s3.S3) (*pb.ChatListResponse, error)
 	GetHouseImagesCount(user_id int) (int, error)
+	UpdateOfferStatus(announcement_id, host_id int) error
 }

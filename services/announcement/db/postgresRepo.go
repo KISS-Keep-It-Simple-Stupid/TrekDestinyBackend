@@ -213,7 +213,7 @@ func (s *PostgresRepository) GetOfferDetails(announcement_id int) (*pb.GetOfferR
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
 	defer cancel()
 	resp := pb.GetOfferResponse{}
-	query := "select host_id from announcement_offer where announcement_id = $1"
+	query := "select host_id , offer_status from announcement_offer where announcement_id = $1"
 	rows, err := s.DB.QueryContext(ctx, query, announcement_id)
 	if err != nil {
 		return nil, err
@@ -223,8 +223,8 @@ func (s *PostgresRepository) GetOfferDetails(announcement_id int) (*pb.GetOfferR
 		var firstname string
 		var lastname string
 		var username string
-		err := rows.Scan(
-			&offer.HostId)
+		var offer_status int
+		err := rows.Scan(&offer.HostId, &offer_status)
 		if err != nil {
 			return nil, err
 		}
@@ -236,6 +236,7 @@ func (s *PostgresRepository) GetOfferDetails(announcement_id int) (*pb.GetOfferR
 		offer.HostFirstName = firstname
 		offer.HostLastName = lastname
 		offer.HostUsername = username
+		offer.Status = int32(offer_status)
 		resp.Offers = append(resp.Offers, &offer)
 	}
 	return &resp, nil

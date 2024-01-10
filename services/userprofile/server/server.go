@@ -219,6 +219,12 @@ func (s *Repository) AddToChatList(ctx context.Context, r *pb.AddChatListRequest
 		err := errors.New("internal error while inserting an item to chat list - userprofile service")
 		return nil, err
 	}
+	err = s.DB.UpdateOfferStatus(int(r.AnnouncementID), int(r.HostID))
+	if err != nil {
+		log.Println(err.Error())
+		err := errors.New("internal error while updating offer status - userprofile service")
+		return nil, err
+	}
 	resp := &pb.AddChatListResponse{
 		Message: "success",
 	}

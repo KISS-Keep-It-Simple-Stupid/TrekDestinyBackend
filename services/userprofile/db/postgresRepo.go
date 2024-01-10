@@ -342,3 +342,11 @@ func (s *PostgresRepository) GetHouseImagesCount(user_id int) (int, error) {
 	err := s.DB.QueryRowContext(ctx, query, user_id).Scan(&count)
 	return count, err
 }
+
+func (s *PostgresRepository) UpdateOfferStatus(announcement_id, host_id int) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
+	defer cancel()
+	query := `update announcement_offer set offer_status=$1 where announcement_id = $2 and host_id = $3`
+	_, err := s.DB.ExecContext(ctx, query, 2, announcement_id, host_id)
+	return err
+}
