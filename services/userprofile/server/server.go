@@ -176,7 +176,7 @@ func (s *Repository) PublicProfileHost(ctx context.Context, r *pb.PublicProfileH
 		resp.Message = message
 		return resp, nil
 	}
-	user_id, err := s.DB.GetIdFromUsername(resp.UserName)
+	user_id, err := s.DB.GetIdFromUsername(r.Username)
 	if err != nil {
 		return nil, err
 	}
@@ -186,12 +186,7 @@ func (s *Repository) PublicProfileHost(ctx context.Context, r *pb.PublicProfileH
 		err := errors.New("internal error while getting user image from object storage - userprofile service")
 		return nil, err
 	}
-
-	host_id, err := s.DB.GetIdFromUsername(r.Username)
-	if err != nil {
-		return nil, err
-	}
-	image_count, err := s.DB.GetHouseImagesCount(claims.UserID)
+	image_count, err := s.DB.GetHouseImagesCount(user_id)
 	if err != nil {
 		log.Println(err.Error())
 		err := errors.New("internal error while getting the count of the host images of the user - userprofile service")
@@ -199,7 +194,7 @@ func (s *Repository) PublicProfileHost(ctx context.Context, r *pb.PublicProfileH
 	}
 	resp.HostHouseImages = make([]string, 0, 3)
 	for i := 1; i <= image_count; i++ {
-		url, err := helper.GetImageURL(s.S3, fmt.Sprintf("user-%d-host-%d", host_id, i))
+		url, err := helper.GetImageURL(s.S3, fmt.Sprintf("user-%d-host-%d", user_id, i))
 		if err != nil {
 			break
 		}
