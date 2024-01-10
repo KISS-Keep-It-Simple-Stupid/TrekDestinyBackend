@@ -191,16 +191,20 @@ func (s *Repository) PublicProfileHost(ctx context.Context, r *pb.PublicProfileH
 	if err != nil {
 		return nil, err
 	}
-
+	image_count, err := s.DB.GetHouseImagesCount(claims.UserID)
+	if err != nil {
+		log.Println(err.Error())
+		err := errors.New("internal error while getting the count of the host images of the user - userprofile service")
+		return nil, err
+	}
 	resp.HostHouseImages = make([]string, 0, 3)
-	for i := 1; i < 4; i++ {
+	for i := 1; i <= image_count; i++ {
 		url, err := helper.GetImageURL(s.S3, fmt.Sprintf("user-%d-host-%d", host_id, i))
 		if err != nil {
 			break
 		}
 		resp.HostHouseImages = append(resp.HostHouseImages, url)
 	}
-
 	resp.Message = "success"
 	return resp, nil
 }
