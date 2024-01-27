@@ -150,7 +150,7 @@ func (s *PostgresRepository) GetAnnouncementDetails(filter []string, sort string
 		resp.Cards = append(resp.Cards, &card)
 	}
 	var cardcount int
-	rows, err = s.DB.QueryContext(ctx, query)
+	rows, err = s.DB.QueryContext(ctx, query ,1 )
 	if err != nil {
 		return nil, err
 	}
