@@ -29,6 +29,8 @@ message profileDetailsResponse {
     string image = 19;
     repeated string HostHouseImages = 20;
     string Message = 21;
+    repeated string interests = 22;
+    repeated string languages = 23;
 }
 
 message editProfileRequest{
@@ -114,6 +116,8 @@ message publicProfileHostResponse {
     string image = 19;
     repeated string HostHouseImages = 20;
     string Message = 21;
+    repeated string interests = 22;
+    repeated string languages = 23;
 }
 
 message addChatListRequest {
