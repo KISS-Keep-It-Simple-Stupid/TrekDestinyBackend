@@ -365,13 +365,21 @@ func (s *Repository) AcceptOffer(ctx context.Context, r *pb.AcceptOfferRequest) 
 		return resp, nil
 	}
 
-	err = s.DB.AcceptUserAsHost(r)
+	// update announcement
+	err = s.DB.UpdateAnnouncementStatus(int(r.AnnouncementId), int(r.HostId))
 	if err != nil {
-		respErr := errors.New("internal server error while accepting offer - announcement service")
-		log.Println(err)
-		return nil, respErr
+		log.Println(err.Error())
+		err := errors.New("internal error while updating main host and status of announcement - announcement service")
+		return nil, err
 	}
 
+	// update chat list status
+	err = s.DB.UpdateChatListStatus(int(r.AnnouncementId), int(r.HostId))
+	if err != nil {
+		log.Println(err.Error())
+		err := errors.New("internal error while updating status of users in chat list - announcement service")
+		return nil, err
+	}
 	resp := pb.AcceptOfferResponse{
 		Message: "success",
 	}

@@ -135,6 +135,7 @@ message chatList {
     string image = 4 ;
     string isHost = 5;
     int32 annoucement_id = 6;
+    int32 status = 7;
 }
 
 message chatListResponse {

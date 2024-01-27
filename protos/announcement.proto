@@ -40,6 +40,8 @@ message CardRecord {
     int32 NumberOfTravelers = 10;
     string Image = 11;
     string UserUsername = 12;
+    int32 main_host = 13;
+    int32 announcement_status = 14;
 }
 
 message getCardResponse {

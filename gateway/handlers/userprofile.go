@@ -274,10 +274,6 @@ func (s *Repository) ChatList(w http.ResponseWriter, r *http.Request) {
 		helpers.MessageGenerator(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-
-	for _, user := range resp.Users {
-		fmt.Println(user.IsHost)
-	}
 	if resp.Message == "success" {
 		helpers.ResponseGenerator(w, resp)
 	} else {

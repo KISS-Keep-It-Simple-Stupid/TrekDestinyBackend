@@ -276,7 +276,7 @@ func (s *PostgresRepository) InsertChatList(host_id, guest_id, announcement_id i
 func (s *PostgresRepository) GetChatList(guest_id int, obj *s3.S3) (*pb.ChatListResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
 	defer cancel()
-	query := `select id ,host_id , guest_id, announcement_id from chatlist where guest_id = $1 or host_id = $2`
+	query := `select id ,host_id , guest_id, announcement_id , chat_status from chatlist where guest_id = $1 or host_id = $2`
 	rows, err := s.DB.QueryContext(ctx, query, guest_id, guest_id)
 	if err != nil {
 		if err != sql.ErrNoRows {
@@ -292,7 +292,7 @@ func (s *PostgresRepository) GetChatList(guest_id int, obj *s3.S3) (*pb.ChatList
 		temp_res := &pb.ChatList{}
 		temp1 := 0
 		temp2 := 0
-		err := rows.Scan(&temp_res.ID, &temp1, &temp2, &temp_res.AnnoucementId)
+		err := rows.Scan(&temp_res.ID, &temp1, &temp2, &temp_res.AnnoucementId, &temp_res.Status)
 		if err != nil {
 			return nil, err
 		}

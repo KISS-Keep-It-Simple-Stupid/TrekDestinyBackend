@@ -15,16 +15,18 @@ type Repository interface {
 	GetOfferDetails(announcement_id int) (*pb.GetOfferResponse, error)
 	GetProfileAnnouncementDetails(user_id int) (*pb.GetCardProfileResponse, error)
 	ValidateOffer(announcement_id int, user_id int) (bool, string, error)
-	InsertPost(postInfo *pb.CreatePostRequest) (error)
+	InsertPost(postInfo *pb.CreatePostRequest) error
 	GetLastPostId() (int, error)
 	GetMyPostDetails(guest_id int) (*pb.GetMyPostResponse, error)
 	GetPostHostDetails(host_id int) (*pb.GetPostHostResponse, error)
-	AcceptUserAsHost(offerInfo *pb.AcceptOfferRequest) (error)
-	RejectUserOffer(offerInfo *pb.RejectOfferRequest) (error)
+	AcceptUserAsHost(offerInfo *pb.AcceptOfferRequest) error
+	RejectUserOffer(offerInfo *pb.RejectOfferRequest) error
 	UpdateAnnouncementInformation(announcementInfo *pb.EditAnnouncementRequest) error
 	DeleteAnnouncement(announcement_id int) error
 	UpdatePostInformation(postInfo *pb.EditPostRequest) error
 	GetHostId(announcement_id int) (int, error)
-	UpdateHostImagesCount(user_id , imageCount int) error
-	DeleteUserChatList(announcement_id , host_id int) error
+	UpdateHostImagesCount(user_id, imageCount int) error
+	DeleteUserChatList(announcement_id, host_id int) error
+	UpdateChatListStatus(announcement_id, host_id int) error
+	UpdateAnnouncementStatus(announcement_id, host_id int) error
 }

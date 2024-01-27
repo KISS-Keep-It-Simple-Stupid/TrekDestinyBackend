@@ -104,16 +104,12 @@ func (s *PostgresRepository) GetAnnouncementDetails(filter []string, sort string
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
 	defer cancel()
 	resp := pb.GetCardResponse{}
-	query := "select id, user_id, description, startdate, enddate, city, state, country, numberoftravelers from announcement"
+	query := "select id, user_id, description, startdate, enddate, city, state, country, numberoftravelers from announcement where announcement_status = $1"
 	if !(len(filter) == 1 && filter[0] == "") {
-		for i, singlefilter := range filter {
+		for _, singlefilter := range filter {
 			parts := strings.Split(singlefilter, ":")
 			field, value := parts[0], parts[1]
-			if i != 0 {
-				query += " and "
-			} else {
-				query += " where "
-			}
+			query += " and "
 			query += field + " = '" + value + "'"
 		}
 	}
@@ -127,8 +123,8 @@ func (s *PostgresRepository) GetAnnouncementDetails(filter []string, sort string
 			query += " asc"
 		}
 	}
-	query2 := query + " limit $1 offset $2"
-	rows, err := s.DB.QueryContext(ctx, query2, pagesize, (pagenumber-1)*pagesize)
+	query2 := query + " limit $2 offset $3"
+	rows, err := s.DB.QueryContext(ctx, query2, 1, pagesize, (pagenumber-1)*pagesize)
 	if err != nil {
 		return nil, err
 	}
@@ -246,7 +242,7 @@ func (s *PostgresRepository) GetProfileAnnouncementDetails(user_id int) (*pb.Get
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
 	defer cancel()
 	resp := pb.GetCardProfileResponse{}
-	query := "select id, user_id, description, startdate, enddate, city, state, country, numberoftravelers from announcement where user_id = $1"
+	query := "select id, user_id, description, startdate, enddate, city, state, country, numberoftravelers , announcement_status , main_host from announcement where user_id = $1"
 	rows, err := s.DB.QueryContext(ctx, query, user_id)
 	if err != nil {
 		return nil, err
@@ -264,7 +260,9 @@ func (s *PostgresRepository) GetProfileAnnouncementDetails(user_id int) (*pb.Get
 			&card.DestinationCity,
 			&card.DestinationState,
 			&card.DestinationCountry,
-			&card.NumberOfTravelers)
+			&card.NumberOfTravelers,
+			&card.AnnouncementStatus,
+			&card.MainHost)
 		if err != nil {
 			return nil, err
 		}
@@ -489,12 +487,12 @@ func (s *PostgresRepository) DeleteAnnouncement(announcement_id int) error {
 	if err != nil {
 		return err
 	}
-	query = `delete from announcement where id = $1`
+	query = `delete from chatlist where announcement_id = $1`
 	_, err = s.DB.ExecContext(ctx, query, announcement_id)
 	if err != nil {
 		return err
 	}
-	query = `delete from chatlist where announcement_id = $1`
+	query = `delete from announcement where id = $1`
 	_, err = s.DB.ExecContext(ctx, query, announcement_id)
 	return err
 }
@@ -540,6 +538,27 @@ func (s *PostgresRepository) DeleteUserChatList(announcement_id, host_id int) er
 	defer cancel()
 	query := `delete from chatlist where announcement_id = $1 and host_id = $2`
 	_, err := s.DB.ExecContext(ctx, query, announcement_id, host_id)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+func (s *PostgresRepository) UpdateChatListStatus(announcement_id, host_id int) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
+	defer cancel()
+	query := `update chatlist set chat_status = $1 where announcement_id = $2 and host_id != $3`
+	_, err := s.DB.ExecContext(ctx, query, 2, announcement_id, host_id)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *PostgresRepository) UpdateAnnouncementStatus(announcement_id, host_id int) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
+	defer cancel()
+	query := `update announcement set announcement_status=$1 , main_host = $2 where id = $3`
+	_, err := s.DB.ExecContext(ctx, query, 2, host_id, announcement_id)
 	if err != nil {
 		return err
 	}
