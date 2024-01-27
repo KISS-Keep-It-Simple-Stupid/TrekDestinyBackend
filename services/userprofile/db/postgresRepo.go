@@ -366,3 +366,43 @@ func (s *PostgresRepository) InsertUserInterest(user_id int, interest string) er
 	_, err := s.DB.ExecContext(ctx, query, user_id, interest)
 	return err
 }
+
+func (s *PostgresRepository) GetLanguagesOfUser(user_id int) ([]string, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
+	defer cancel()
+	var languages []string
+	query := "select language from member_language where user_id = $1"
+	rows, err := s.DB.QueryContext(ctx, query, user_id)
+	if err != nil {
+		return nil, err
+	}
+	for rows.Next() {
+		var lang string
+		err := rows.Scan(&lang)
+		if err != nil {
+			return nil, err
+		}
+		languages = append(languages, lang)
+	}
+	return languages, nil
+}
+
+func (s *PostgresRepository) GetInterestsOfUser(user_id int) ([]string, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
+	defer cancel()
+	var interests []string
+	query := "select interest from member_interest where user_id = $1"
+	rows, err := s.DB.QueryContext(ctx, query, user_id)
+	if err != nil {
+		return nil, err
+	}
+	for rows.Next() {
+		var interest string
+		err := rows.Scan(&interest)
+		if err != nil {
+			return nil, err
+		}
+		interests = append(interests, interest)
+	}
+	return interests, nil
+}

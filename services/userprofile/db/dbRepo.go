@@ -19,4 +19,6 @@ type Repository interface {
 	UpdateOfferStatus(announcement_id, host_id int) error
 	InsertUserLanguage(user_id int, lang string) error
 	InsertUserInterest(user_id int, interest string) error
+	GetLanguagesOfUser(user_id int) ([]string, error)
+	GetInterestsOfUser(user_id int) ([]string, error)
 }

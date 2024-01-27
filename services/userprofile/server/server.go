@@ -63,6 +63,20 @@ func (s *Repository) ProfileDetails(ctx context.Context, r *pb.ProfileDetailsReq
 		}
 		resp.HostHouseImages = append(resp.HostHouseImages, url)
 	}
+	languages, err := s.DB.GetLanguagesOfUser(claims.UserID)
+	if err != nil {
+		respErr := errors.New("internal server error while getting languages of user - userprofile service")
+		log.Println(err)
+		return nil, respErr
+	}
+	resp.Languages = languages[:]
+	interests, err := s.DB.GetInterestsOfUser(claims.UserID)
+	if err != nil {
+		respErr := errors.New("internal server error while getting interests of user - userprofile service")
+		log.Println(err)
+		return nil, respErr
+	}
+	resp.Interests = interests[:]
 	resp.Message = "success"
 	return resp, nil
 }
@@ -216,6 +230,20 @@ func (s *Repository) PublicProfileHost(ctx context.Context, r *pb.PublicProfileH
 		}
 		resp.HostHouseImages = append(resp.HostHouseImages, url)
 	}
+	languages, err := s.DB.GetLanguagesOfUser(user_id)
+	if err != nil {
+		respErr := errors.New("internal server error while getting languages of user - userprofile service")
+		log.Println(err)
+		return nil, respErr
+	}
+	resp.Languages = languages[:]
+	interests, err := s.DB.GetInterestsOfUser(user_id)
+	if err != nil {
+		respErr := errors.New("internal server error while getting interests of user - userprofile service")
+		log.Println(err)
+		return nil, respErr
+	}
+	resp.Interests = interests[:]
 	resp.Message = "success"
 	return resp, nil
 }
