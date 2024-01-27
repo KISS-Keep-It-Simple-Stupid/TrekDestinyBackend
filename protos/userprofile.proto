@@ -48,6 +48,8 @@ message editProfileRequest{
     string IsSmokingAllowed = 14;
     int32 RoomNumber = 15;
     string PhoneNumber = 16;
+    repeated string interests = 17;
+    repeated string languages = 18;
 }
 
 message editProfileResponse{

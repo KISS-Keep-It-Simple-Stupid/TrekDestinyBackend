@@ -350,3 +350,19 @@ func (s *PostgresRepository) UpdateOfferStatus(announcement_id, host_id int) err
 	_, err := s.DB.ExecContext(ctx, query, 2, announcement_id, host_id)
 	return err
 }
+
+func (s *PostgresRepository) InsertUserLanguage(user_id int, lang string) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
+	defer cancel()
+	query := `insert into member_language (user_id, language) values ($1, $2)`
+	_, err := s.DB.ExecContext(ctx, query, user_id, lang)
+	return err
+}
+
+func (s *PostgresRepository) InsertUserInterest(user_id int, interest string) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
+	defer cancel()
+	query := `insert into member_interest (user_id, interest) values ($1, $2)`
+	_, err := s.DB.ExecContext(ctx, query, user_id, interest)
+	return err
+}

@@ -96,6 +96,22 @@ func (s *Repository) EditProfile(ctx context.Context, r *pb.EditProfileRequest) 
 		err := errors.New("internal error while updating user info - userprofile service")
 		return nil, err
 	}
+	for _, lang := range r.Languages {
+		err := s.DB.InsertUserLanguage(claims.UserID, lang)
+		if err != nil {
+			respErr := errors.New("internal server error while adding new user language - userprofile service")
+			log.Println(err)
+			return nil, respErr
+		}
+	}
+	for _, interest := range r.Interests {
+		err := s.DB.InsertUserInterest(claims.UserID, interest)
+		if err != nil {
+			respErr := errors.New("internal server error while adding new user interest - userprofile service")
+			log.Println(err)
+			return nil, respErr
+		}
+	}
 	resp := &pb.EditProfileResponse{
 		Message: "success",
 	}
