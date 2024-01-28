@@ -47,8 +47,9 @@ jobs:
         password: ${{ secrets.PASSWORD }}
         port: ${{ secrets.PORT }}
         script: |
-            cd /root/git/TrekDestinyBackend 
-            docker compose down 
+            cd /root/git/TrekDestinyBackend  
             git pull origin develop
+            cd /root/git
+            docker compose down
             docker compose up --build -d 
             docker image prune -f

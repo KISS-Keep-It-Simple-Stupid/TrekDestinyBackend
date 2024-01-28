@@ -29,4 +29,5 @@ type Repository interface {
 	DeleteUserChatList(announcement_id, host_id int) error
 	UpdateChatListStatus(announcement_id, host_id int) error
 	UpdateAnnouncementStatus(announcement_id, host_id int) error
+	UpdateMainHostStatusInChatList(announcement_id, host_id int) error
 }

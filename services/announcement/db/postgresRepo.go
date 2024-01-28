@@ -150,7 +150,7 @@ func (s *PostgresRepository) GetAnnouncementDetails(filter []string, sort string
 		resp.Cards = append(resp.Cards, &card)
 	}
 	var cardcount int
-	rows, err = s.DB.QueryContext(ctx, query ,1 )
+	rows, err = s.DB.QueryContext(ctx, query, 1)
 	if err != nil {
 		return nil, err
 	}
@@ -265,6 +265,9 @@ func (s *PostgresRepository) GetProfileAnnouncementDetails(user_id int) (*pb.Get
 			&card.MainHost)
 		if err != nil {
 			return nil, err
+		}
+		if time.Now().After(enddate) {
+			card.AnnouncementStatus = 3
 		}
 		card.StartDate = startdate.Format("2006-01-02")
 		card.EndDate = enddate.Format("2006-01-02")
@@ -551,6 +554,11 @@ func (s *PostgresRepository) UpdateChatListStatus(announcement_id, host_id int) 
 	if err != nil {
 		return err
 	}
+	query = `update chatlist set chat_status = $1 where announcement_id = $2 and host_id = $3`
+	_, err = s.DB.ExecContext(ctx, query, 3, announcement_id, host_id)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -559,6 +567,17 @@ func (s *PostgresRepository) UpdateAnnouncementStatus(announcement_id, host_id i
 	defer cancel()
 	query := `update announcement set announcement_status=$1 , main_host = $2 where id = $3`
 	_, err := s.DB.ExecContext(ctx, query, 2, host_id, announcement_id)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *PostgresRepository) UpdateMainHostStatusInChatList(announcement_id, host_id int) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
+	defer cancel()
+	query := `update chatlist set chat_status = $1 where announcement_id = $2 and host_id = $3`
+	_, err := s.DB.ExecContext(ctx, query, 2, announcement_id, host_id)
 	if err != nil {
 		return err
 	}
