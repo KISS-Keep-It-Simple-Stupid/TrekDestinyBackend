@@ -225,6 +225,16 @@ func (s *Repository) GetCardProfile(ctx context.Context, r *pb.GetCardProfileReq
 			return nil, respErr
 		}
 		card.PreferredLanguages = languages[:]
+
+		// update status of main_host in chatlist
+		if card.AnnouncementStatus == 3 {
+			err = s.DB.UpdateMainHostStatusInChatList(int(card.CardId), int(card.MainHost))
+			if err != nil {
+				respErr := errors.New("internal server error while updating main host status in chatlist - announcement service")
+				log.Println(err)
+				return nil, respErr
+			}
+		}
 	}
 	resp.Message = "success"
 	return resp, nil
