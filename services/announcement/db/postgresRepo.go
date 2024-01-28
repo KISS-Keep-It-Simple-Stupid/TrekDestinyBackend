@@ -546,6 +546,7 @@ func (s *PostgresRepository) DeleteUserChatList(announcement_id, host_id int) er
 	}
 	return nil
 }
+
 func (s *PostgresRepository) UpdateChatListStatus(announcement_id, host_id int) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
 	defer cancel()
