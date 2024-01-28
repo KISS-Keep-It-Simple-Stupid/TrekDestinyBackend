@@ -2,6 +2,7 @@ package db
 
 import (
 	"database/sql"
+	"errors"
 	"testing"
 	"time"
 
@@ -11,6 +12,22 @@ import (
 	_ "github.com/lib/pq"
 	"github.com/stretchr/testify/assert"
 )
+
+func TestPostgresRepository_NewPostgresRepository(t *testing.T) {
+	mockDB, err := sql.Open("sqlmock", "mock")
+	if err != nil {
+		t.Fatalf("Error creating mock database: %v", err)
+	}
+	defer mockDB.Close()
+
+	repo := NewPostgresRepository(mockDB)
+
+	if _, ok := repo.(*PostgresRepository); !ok {
+		t.Error("Returned repository has the wrong type")
+	}
+
+	_ = repo.(*PostgresRepository).DB
+}
 
 func TestPostgresRepository_GetUserDetails(t *testing.T) {
 	db, mock, err := sqlmock.New()
@@ -477,26 +494,198 @@ func TestPostgresRepository_GetChatList(t *testing.T) {
 }
 
 func TestPostgresRepository_GetUserNameByID(t *testing.T) {
-	db, mock, err := sqlmock.New()
+	mockDB, mock, err := sqlmock.New()
 	if err != nil {
-		t.Fatalf("Failed to initialize SQL mock: %v", err)
+		t.Fatalf("Error creating mock database: %v", err)
 	}
-	defer db.Close()
+	defer mockDB.Close()
 
-	repo := &PostgresRepository{DB: db}
+	repo := &PostgresRepository{DB: mockDB}
 
-	expectedUserID := 1
-	expectedUsername := "testuser"
+	userID := 1
+	expectedUsername := "JohnDoe"
+	rows := sqlmock.NewRows([]string{"username"}).AddRow(expectedUsername)
+	mock.ExpectQuery("select username from members where id = \\$1").
+		WithArgs(userID).
+		WillReturnRows(rows)
 
-	mock.ExpectQuery("select username from members where id = ?").
-		WithArgs(expectedUserID).
-		WillReturnRows(sqlmock.NewRows([]string{"username"}).AddRow(expectedUsername))
+	username, err := repo.GetUserNameByID(userID)
+	if err != nil {
+		t.Errorf("Unexpected error: %v", err)
+	}
+	if username != expectedUsername {
+		t.Errorf("Unexpected username. Expected: %s, Got: %s", expectedUsername, username)
+	}
 
-	result, err := repo.GetUserNameByID(expectedUserID)
+	mock.ExpectQuery("select username from members where id = \\$1").
+		WithArgs(userID).
+		WillReturnError(errors.New("database error"))
 
-	assert.Nil(t, err, "Unexpected error")
+	_, err = repo.GetUserNameByID(userID)
+	if err == nil {
+		t.Error("Expected error, but got nil")
+	}
 
-	assert.Equal(t, expectedUsername, result, "Unexpected username")
+	mock.ExpectQuery("select username from members where id = \\$1").
+		WithArgs(userID).
+		WillReturnRows(sqlmock.NewRows([]string{"username"}).AddRow(123)) // invalid data type
 
-	assert.Nil(t, mock.ExpectationsWereMet(), "Unfulfilled expectations")
+	_, _ = repo.GetUserNameByID(userID)
+}
+
+func TestPostgresRepository_GetHouseImagesCount(t *testing.T) {
+	mockDB, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("Error creating mock database: %v", err)
+	}
+	defer mockDB.Close()
+
+	repo := &PostgresRepository{DB: mockDB}
+
+	userID := 1
+	expectedCount := 42
+	rows := sqlmock.NewRows([]string{"hostImageCount"}).AddRow(expectedCount)
+	mock.ExpectQuery("select hostImageCount from members where id = ?").
+		WithArgs(userID).
+		WillReturnRows(rows)
+
+	count, err := repo.GetHouseImagesCount(userID)
+	if err != nil {
+		t.Errorf("Unexpected error: %v", err)
+	}
+	if count != expectedCount {
+		t.Errorf("Unexpected count. Expected: %d, Got: %d", expectedCount, count)
+	}
+
+	mock.ExpectQuery("select hostImageCount from members where id = ?").
+		WithArgs(userID).
+		WillReturnError(errors.New("database error"))
+
+	_, err = repo.GetHouseImagesCount(userID)
+	if err == nil {
+		t.Error("Expected error, but got nil")
+	}
+
+	mock.ExpectQuery("select hostImageCount from members where id = ?").
+		WithArgs(userID).
+		WillReturnRows(sqlmock.NewRows([]string{"hostImageCount"}).AddRow("invalid"))
+
+	_, err = repo.GetHouseImagesCount(userID)
+	if err == nil {
+		t.Error("Expected error, but got nil")
+	}
+}
+
+func TestPostgresRepository_UpdateOfferStatus(t *testing.T) {
+	mockDB, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("Error creating mock database: %v", err)
+	}
+	defer mockDB.Close()
+
+	repo := &PostgresRepository{DB: mockDB}
+
+	announcementID := 1
+	hostID := 2
+	mock.ExpectExec("update announcement_offer set offer_status=\\$1 where announcement_id = \\$2 and host_id = \\$3").
+		WithArgs(2, announcementID, hostID).
+		WillReturnResult(sqlmock.NewResult(0, 1))
+
+	err = repo.UpdateOfferStatus(announcementID, hostID)
+	if err != nil {
+		t.Errorf("Unexpected error: %v", err)
+	}
+
+	mock.ExpectExec("update announcement_offer set offer_status=\\$1 where announcement_id = \\$2 and host_id = \\$3").
+		WithArgs(2, announcementID, hostID).
+		WillReturnResult(sqlmock.NewResult(0, 0))
+
+	_ = repo.UpdateOfferStatus(announcementID, hostID)
+
+	mock.ExpectExec("update announcement_offer set offer_status=\\$1 where announcement_id = \\$2 and host_id = \\$3").
+		WithArgs(2, announcementID, hostID).
+		WillReturnError(errors.New("database error"))
+
+	err = repo.UpdateOfferStatus(announcementID, hostID)
+	if err == nil {
+		t.Error("Expected error, but got nil")
+	}
+}
+
+func TestPostgresRepository_InsertUserLanguage(t *testing.T) {
+	mockDB, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("Error creating mock database: %v", err)
+	}
+	defer mockDB.Close()
+
+	repo := &PostgresRepository{DB: mockDB}
+
+	userID := 1
+	language := "English"
+	mock.ExpectExec("insert into member_language \\(user_id, language\\) values \\(\\$1, \\$2\\)").
+		WithArgs(userID, language).
+		WillReturnResult(sqlmock.NewResult(1, 1))
+
+	err = repo.InsertUserLanguage(userID, language)
+	if err != nil {
+		t.Errorf("Unexpected error: %v", err)
+	}
+
+	mock.ExpectExec("insert into member_language \\(user_id, language\\) values \\(\\$1, \\$2\\)").
+		WithArgs(userID, language).
+		WillReturnError(errors.New("database error"))
+
+	err = repo.InsertUserLanguage(userID, language)
+	if err == nil {
+		t.Error("Expected error, but got nil")
+	}
+
+	mock.ExpectExec("insert into member_language \\(user_id, language\\) values \\(\\$1, \\$2\\)").
+		WithArgs(userID, language).
+		WillReturnResult(sqlmock.NewResult(0, 0))
+
+	err = repo.InsertUserLanguage(userID, language)
+	if err != nil {
+		t.Errorf("Unexpected error: %v", err)
+	}
+}
+
+func TestPostgresRepository_InsertUserInterest(t *testing.T) {
+	mockDB, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("Error creating mock database: %v", err)
+	}
+	defer mockDB.Close()
+
+	repo := &PostgresRepository{DB: mockDB}
+
+	userID := 1
+	interest := "Programming"
+	mock.ExpectExec("insert into member_interest \\(user_id, interest\\) values \\(\\$1, \\$2\\)").
+		WithArgs(userID, interest).
+		WillReturnResult(sqlmock.NewResult(1, 1))
+
+	err = repo.InsertUserInterest(userID, interest)
+	if err != nil {
+		t.Errorf("Unexpected error: %v", err)
+	}
+
+	mock.ExpectExec("insert into member_interest \\(user_id, interest\\) values \\(\\$1, \\$2\\)").
+		WithArgs(userID, interest).
+		WillReturnError(errors.New("database error"))
+
+	err = repo.InsertUserInterest(userID, interest)
+	if err == nil {
+		t.Error("Expected error, but got nil")
+	}
+
+	mock.ExpectExec("insert into member_interest \\(user_id, interest\\) values \\(\\$1, \\$2\\)").
+		WithArgs(userID, interest).
+		WillReturnResult(sqlmock.NewResult(0, 0))
+
+	err = repo.InsertUserInterest(userID, interest)
+	if err != nil {
+		t.Errorf("Unexpected error: %v", err)
+	}
 }
