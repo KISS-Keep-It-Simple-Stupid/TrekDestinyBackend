@@ -1,0 +1,779 @@
+
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+		<title>db: Go Coverage Report</title>
+		<style>
+			body {
+				background: black;
+				color: rgb(80, 80, 80);
+			}
+			body, pre, #legend span {
+				font-family: Menlo, monospace;
+				font-weight: bold;
+			}
+			#topbar {
+				background: black;
+				position: fixed;
+				top: 0; left: 0; right: 0;
+				height: 42px;
+				border-bottom: 1px solid rgb(80, 80, 80);
+			}
+			#content {
+				margin-top: 50px;
+			}
+			#nav, #legend {
+				float: left;
+				margin-left: 10px;
+			}
+			#legend {
+				margin-top: 12px;
+			}
+			#nav {
+				margin-top: 10px;
+			}
+			#legend span {
+				margin: 0 5px;
+			}
+			.cov0 { color: rgb(192, 0, 0) }
+.cov1 { color: rgb(128, 128, 128) }
+.cov2 { color: rgb(116, 140, 131) }
+.cov3 { color: rgb(104, 152, 134) }
+.cov4 { color: rgb(92, 164, 137) }
+.cov5 { color: rgb(80, 176, 140) }
+.cov6 { color: rgb(68, 188, 143) }
+.cov7 { color: rgb(56, 200, 146) }
+.cov8 { color: rgb(44, 212, 149) }
+.cov9 { color: rgb(32, 224, 152) }
+.cov10 { color: rgb(20, 236, 155) }
+
+		</style>
+	</head>
+	<body>
+		<div id="topbar">
+			<div id="nav">
+				<select id="files">
+				
+				<option value="file0">github.com/KISS-Keep-It-Simple-Stupid/TrekDestinyBackend/services/announcement/db/postgresRepo.go (72.8%)</option>
+				
+				<option value="file1">github.com/KISS-Keep-It-Simple-Stupid/TrekDestinyBackend/services/announcement/driver/driver.go (77.8%)</option>
+				
+				<option value="file2">github.com/KISS-Keep-It-Simple-Stupid/TrekDestinyBackend/services/announcement/helper/helper.go (88.9%)</option>
+				
+				</select>
+			</div>
+			<div id="legend">
+				<span>not tracked</span>
+			
+				<span class="cov0">not covered</span>
+				<span class="cov8">covered</span>
+			
+			</div>
+		</div>
+		<div id="content">
+		
+		<pre class="file" id="file0" style="display: none">package db
+
+import (
+        "context"
+        "database/sql"
+        "log"
+        "math"
+        "strings"
+        "time"
+
+        "github.com/KISS-Keep-It-Simple-Stupid/TrekDestinyBackend/services/announcement/pb"
+)
+
+type PostgresRepository struct {
+        DB *sql.DB
+}
+
+func NewPostgresRepository(db *sql.DB) Repository <span class="cov0" title="0">{
+        return &amp;PostgresRepository{
+                DB: db,
+        }
+}</span>
+
+func (s *PostgresRepository) GetIdFromUsername(username string) (int, error) <span class="cov8" title="1">{
+        ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
+        defer cancel()
+        var id int
+        query := `select id from members where username = $1`
+        err := s.DB.QueryRowContext(ctx, query, username).Scan(&amp;id)
+        if err != nil </span><span class="cov8" title="1">{
+                return -1, err
+        }</span>
+        <span class="cov8" title="1">return id, nil</span>
+}
+
+func (s *PostgresRepository) GetUsernameFromId(id int) (string, error) <span class="cov8" title="1">{
+        ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
+        defer cancel()
+        var username string
+        query := `select username from members where id = $1`
+        err := s.DB.QueryRowContext(ctx, query, id).Scan(&amp;username)
+        if err != nil </span><span class="cov0" title="0">{
+                return "", err
+        }</span>
+        <span class="cov8" title="1">return username, nil</span>
+}
+
+func (s *PostgresRepository) InsertAnnouncement(announcementInfo *pb.CreateCardRequest, user_id int) (int, error) <span class="cov8" title="1">{
+        ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
+        defer cancel()
+        query := `insert into announcement (user_id, description, startdate, enddate, city, state, country, numberoftravelers) values ($1, $2, $3, $4, $5, $6, $7, $8)`
+        startdate, err := time.Parse("2006-01-02", announcementInfo.StartDate)
+        if err != nil </span><span class="cov0" title="0">{
+                return -1, err
+        }</span>
+        <span class="cov8" title="1">enddate, err := time.Parse("2006-01-02", announcementInfo.EndDate)
+        if err != nil </span><span class="cov0" title="0">{
+                return -1, err
+        }</span>
+        <span class="cov8" title="1">_, err = s.DB.ExecContext(ctx, query, user_id, announcementInfo.Description, startdate, enddate, announcementInfo.DestinationCity, announcementInfo.DestinationState, announcementInfo.DestinationCountry, int(announcementInfo.NumberOfTravelers))
+        if err != nil </span><span class="cov0" title="0">{
+                return -1, err
+        }</span>
+        <span class="cov8" title="1">var announcement_id int
+        err = s.DB.QueryRow("select id from announcement order by id desc limit 1").Scan(&amp;announcement_id)
+        if err != nil </span><span class="cov0" title="0">{
+                return -1, err
+        }</span>
+        <span class="cov8" title="1">return int(announcement_id), nil</span>
+}
+
+func (s *PostgresRepository) InsertAnnouncementLanguage(announcement_id int, lang string) error <span class="cov8" title="1">{
+        ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
+        defer cancel()
+        query := `insert into announcement_language (announcement_id, language) values ($1, $2)`
+        _, err := s.DB.ExecContext(ctx, query, announcement_id, lang)
+        return err
+}</span>
+
+func (s *PostgresRepository) CheckAnnouncementTimeValidation(startDate string, endDate string, user_id int) (bool, error) <span class="cov8" title="1">{
+        ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
+        defer cancel()
+        query := `select id from announcement where user_id = $1 and enddate &gt;= $2 and startdate &lt;= $3`
+        startdate, err := time.Parse("2006-01-02", startDate)
+        if err != nil </span><span class="cov0" title="0">{
+                return false, err
+        }</span>
+        <span class="cov8" title="1">enddate, err := time.Parse("2006-01-02", endDate)
+        if err != nil </span><span class="cov0" title="0">{
+                return false, err
+        }</span>
+        <span class="cov8" title="1">var temp int
+        err = s.DB.QueryRowContext(ctx, query, user_id, startdate, enddate).Scan(&amp;temp)
+        if err != nil </span><span class="cov8" title="1">{
+                if err != sql.ErrNoRows </span><span class="cov0" title="0">{
+                        return false, err
+                }</span>
+                <span class="cov8" title="1">return true, nil</span>
+        }
+        <span class="cov8" title="1">return false, nil</span>
+}
+
+func (s *PostgresRepository) GetAnnouncementDetails(filter []string, sort string, pagesize, pagenumber int) (*pb.GetCardResponse, error) <span class="cov8" title="1">{
+        ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
+        defer cancel()
+        resp := pb.GetCardResponse{}
+        query := "select id, user_id, description, startdate, enddate, city, state, country, numberoftravelers from announcement where announcement_status = $1"
+        if !(len(filter) == 1 &amp;&amp; filter[0] == "") </span><span class="cov8" title="1">{
+                for _, singlefilter := range filter </span><span class="cov0" title="0">{
+                        parts := strings.Split(singlefilter, ":")
+                        field, value := parts[0], parts[1]
+                        query += " and "
+                        query += field + " = '" + value + "'"
+                }</span>
+        }
+        <span class="cov8" title="1">if sort != "" </span><span class="cov0" title="0">{
+                parts := strings.Split(sort, ".")
+                sortvalue, order := parts[0], parts[1]
+                query += " order by " + sortvalue
+                if order == "desc" </span><span class="cov0" title="0">{
+                        query += " desc"
+                }</span> else<span class="cov0" title="0"> if order == "asc" </span><span class="cov0" title="0">{
+                        query += " asc"
+                }</span>
+        }
+        <span class="cov8" title="1">query2 := query + " limit $2 offset $3"
+        rows, err := s.DB.QueryContext(ctx, query2, 1, pagesize, (pagenumber-1)*pagesize)
+        if err != nil </span><span class="cov8" title="1">{
+                return nil, err
+        }</span>
+        <span class="cov0" title="0">for rows.Next() </span><span class="cov0" title="0">{
+                card := pb.CardRecord{}
+                var startdate time.Time
+                var enddate time.Time
+                err := rows.Scan(
+                        &amp;card.CardId,
+                        &amp;card.UserId,
+                        &amp;card.Description,
+                        &amp;startdate,
+                        &amp;enddate,
+                        &amp;card.DestinationCity,
+                        &amp;card.DestinationState,
+                        &amp;card.DestinationCountry,
+                        &amp;card.NumberOfTravelers)
+                if err != nil </span><span class="cov0" title="0">{
+                        return nil, err
+                }</span>
+                <span class="cov0" title="0">card.StartDate = startdate.Format("2006-01-02")
+                card.EndDate = enddate.Format("2006-01-02")
+                resp.Cards = append(resp.Cards, &amp;card)</span>
+        }
+        <span class="cov0" title="0">var cardcount int
+        rows, err = s.DB.QueryContext(ctx, query, 1)
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+        <span class="cov0" title="0">for rows.Next() </span><span class="cov0" title="0">{
+                cardcount++
+        }</span>
+        <span class="cov0" title="0">resp.PageCount = int32(math.Ceil(float64(cardcount) / float64(pagesize)))
+        return &amp;resp, nil</span>
+}
+
+func (s *PostgresRepository) GetLanguagesOfAnnouncement(announcement_id int) ([]string, error) <span class="cov8" title="1">{
+        ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
+        defer cancel()
+        var languages []string
+        query := "select language from announcement_language where announcement_id = $1"
+        rows, err := s.DB.QueryContext(ctx, query, announcement_id)
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+        <span class="cov8" title="1">for rows.Next() </span><span class="cov8" title="1">{
+                var lang string
+                err := rows.Scan(&amp;lang)
+                if err != nil </span><span class="cov0" title="0">{
+                        return nil, err
+                }</span>
+                <span class="cov8" title="1">languages = append(languages, lang)</span>
+        }
+        <span class="cov8" title="1">return languages, nil</span>
+}
+
+func (s *PostgresRepository) InsertOffer(offerInfo *pb.CreateOfferRequest, user_id int) error <span class="cov8" title="1">{
+        ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
+        defer cancel()
+        query := `insert into announcement_offer (announcement_id, host_id) values ($1, $2)`
+        _, err := s.DB.ExecContext(ctx, query, int(offerInfo.AnnouncementId), user_id)
+        if err != nil </span><span class="cov0" title="0">{
+                log.Println(err.Error())
+                return err
+        }</span>
+        <span class="cov8" title="1">return nil</span>
+}
+
+func (s *PostgresRepository) GetGuestID(announcementID int) (int, error) <span class="cov8" title="1">{
+        ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
+        defer cancel()
+        query := "select user_id from announcement where id = $1"
+        guestID := 0
+        err := s.DB.QueryRowContext(ctx, query, announcementID).Scan(&amp;guestID)
+        if err != nil </span><span class="cov0" title="0">{
+                return -1, err
+        }</span>
+        <span class="cov8" title="1">return guestID, nil</span>
+}
+
+func (s *PostgresRepository) GetOfferDetails(announcement_id int) (*pb.GetOfferResponse, error) <span class="cov8" title="1">{
+        ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
+        defer cancel()
+        resp := pb.GetOfferResponse{}
+        query := "select host_id , offer_status from announcement_offer where announcement_id = $1"
+        rows, err := s.DB.QueryContext(ctx, query, announcement_id)
+        if err != nil </span><span class="cov8" title="1">{
+                return nil, err
+        }</span>
+        <span class="cov8" title="1">for rows.Next() </span><span class="cov8" title="1">{
+                offer := pb.OfferRecord{}
+                var firstname string
+                var lastname string
+                var username string
+                var offer_status int
+                err := rows.Scan(&amp;offer.HostId, &amp;offer_status)
+                if err != nil </span><span class="cov8" title="1">{
+                        return nil, err
+                }</span>
+                <span class="cov8" title="1">query := "select firstname, lastname, username from members where id = $1"
+                err = s.DB.QueryRowContext(ctx, query, offer.HostId).Scan(&amp;firstname, &amp;lastname, &amp;username)
+                if err != nil </span><span class="cov0" title="0">{
+                        return nil, err
+                }</span>
+                <span class="cov8" title="1">offer.HostFirstName = firstname
+                offer.HostLastName = lastname
+                offer.HostUsername = username
+                offer.Status = int32(offer_status)
+                resp.Offers = append(resp.Offers, &amp;offer)</span>
+        }
+        <span class="cov8" title="1">return &amp;resp, nil</span>
+}
+
+func (s *PostgresRepository) GetProfileAnnouncementDetails(user_id int) (*pb.GetCardProfileResponse, error) <span class="cov8" title="1">{
+        ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
+        defer cancel()
+        resp := pb.GetCardProfileResponse{}
+        query := "select id, user_id, description, startdate, enddate, city, state, country, numberoftravelers , announcement_status , main_host from announcement where user_id = $1"
+        rows, err := s.DB.QueryContext(ctx, query, user_id)
+        if err != nil </span><span class="cov8" title="1">{
+                return nil, err
+        }</span>
+        <span class="cov8" title="1">for rows.Next() </span><span class="cov8" title="1">{
+                card := pb.CardRecord{}
+                var startdate time.Time
+                var enddate time.Time
+                err := rows.Scan(
+                        &amp;card.CardId,
+                        &amp;card.UserId,
+                        &amp;card.Description,
+                        &amp;startdate,
+                        &amp;enddate,
+                        &amp;card.DestinationCity,
+                        &amp;card.DestinationState,
+                        &amp;card.DestinationCountry,
+                        &amp;card.NumberOfTravelers,
+                        &amp;card.AnnouncementStatus,
+                        &amp;card.MainHost)
+                if err != nil </span><span class="cov8" title="1">{
+                        return nil, err
+                }</span>
+                <span class="cov0" title="0">if time.Now().After(enddate) </span><span class="cov0" title="0">{
+                        card.AnnouncementStatus = 3
+                }</span>
+                <span class="cov0" title="0">card.StartDate = startdate.Format("2006-01-02")
+                card.EndDate = enddate.Format("2006-01-02")
+                resp.Cards = append(resp.Cards, &amp;card)</span>
+        }
+        <span class="cov0" title="0">return &amp;resp, nil</span>
+}
+
+func (s *PostgresRepository) ValidateOffer(announcement_id int, user_id int) (bool, string, error) <span class="cov8" title="1">{
+        ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
+        defer cancel()
+        var temp_id int
+        query := `select user_id from announcement where id = $1`
+        err := s.DB.QueryRowContext(ctx, query, announcement_id).Scan(&amp;temp_id)
+        if err != nil </span><span class="cov0" title="0">{
+                return true, "", err
+        }</span>
+        <span class="cov8" title="1">if temp_id == user_id </span><span class="cov8" title="1">{
+                return false, "you can not offer to your own announcement", nil
+        }</span>
+
+        <span class="cov8" title="1">query = `select host_id from announcement_offer where announcement_id = $1`
+        rows, err := s.DB.QueryContext(ctx, query, announcement_id)
+        if err != nil </span><span class="cov0" title="0">{
+                return true, "", err
+        }</span>
+        <span class="cov8" title="1">for rows.Next() </span><span class="cov8" title="1">{
+                err := rows.Scan(&amp;temp_id)
+                if err != nil </span><span class="cov0" title="0">{
+                        return true, "", err
+                }</span>
+                <span class="cov8" title="1">if temp_id == user_id </span><span class="cov8" title="1">{
+                        return false, "you have already offered to this announcement", nil
+                }</span>
+        }
+        <span class="cov8" title="1">return true, "", nil</span>
+}
+
+func (s *PostgresRepository) InsertPost(postInfo *pb.CreatePostRequest) error <span class="cov8" title="1">{
+        ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
+        defer cancel()
+        var host_id int
+        var guest_id int
+        query := `select user_id, main_host from announcement where id = $1`
+        err := s.DB.QueryRowContext(ctx, query, postInfo.AnnouncementId).Scan(&amp;guest_id, &amp;host_id)
+        if err != nil </span><span class="cov8" title="1">{
+                return err
+        }</span>
+        <span class="cov8" title="1">query = `insert into post (announcement_id, host_id, guest_id, title, rating, body) values ($1, $2, $3, $4, $5, $6)`
+        _, err = s.DB.ExecContext(ctx, query, postInfo.AnnouncementId, host_id, guest_id, postInfo.PostTitle, int(postInfo.HostRating), postInfo.PostBody)
+        if err != nil </span><span class="cov8" title="1">{
+                return err
+        }</span>
+        <span class="cov8" title="1">return nil</span>
+}
+
+func (s *PostgresRepository) GetLastPostId() (int, error) <span class="cov8" title="1">{
+        ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
+        defer cancel()
+        var post_id int
+        err := s.DB.QueryRowContext(ctx, "select id from post order by id desc limit 1").Scan(&amp;post_id)
+        if err != nil </span><span class="cov8" title="1">{
+                return -1, err
+        }</span>
+        <span class="cov8" title="1">return post_id, nil</span>
+}
+
+func (s *PostgresRepository) GetMyPostDetails(guest_id int) (*pb.GetMyPostResponse, error) <span class="cov8" title="1">{
+        ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
+        defer cancel()
+        resp := pb.GetMyPostResponse{}
+        query := "select id, announcement_id, host_id, guest_id, title, rating, body from post where guest_id = $1"
+        rows, err := s.DB.QueryContext(ctx, query, guest_id)
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+        <span class="cov8" title="1">for rows.Next() </span><span class="cov8" title="1">{
+                post := pb.PostRecord{}
+                var host_id int
+                var guest_id int
+                err := rows.Scan(
+                        &amp;post.PostId,
+                        &amp;post.AnnouncementId,
+                        &amp;host_id,
+                        &amp;guest_id,
+                        &amp;post.PostTitle,
+                        &amp;post.HostRating,
+                        &amp;post.PostBody)
+                if err != nil </span><span class="cov0" title="0">{
+                        return nil, err
+                }</span>
+                <span class="cov8" title="1">var host_username string
+                var guest_username string
+                query := "select username from members where id = $1"
+                err = s.DB.QueryRowContext(ctx, query, host_id).Scan(&amp;host_username)
+                if err != nil </span><span class="cov0" title="0">{
+                        return nil, err
+                }</span>
+                <span class="cov8" title="1">err = s.DB.QueryRowContext(ctx, query, guest_id).Scan(&amp;guest_username)
+                if err != nil </span><span class="cov0" title="0">{
+                        return nil, err
+                }</span>
+                <span class="cov8" title="1">post.HostUsername = host_username
+                post.GuestUsername = guest_username
+                post.HostId = int32(host_id)
+                post.GuestId = int32(guest_id)
+                resp.Posts = append(resp.Posts, &amp;post)</span>
+        }
+        <span class="cov8" title="1">return &amp;resp, nil</span>
+}
+
+func (s *PostgresRepository) GetPostHostDetails(username string) (*pb.GetPostHostResponse, error) <span class="cov8" title="1">{
+        ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
+        defer cancel()
+        id, err := s.GetIdFromUsername(username)
+        if err != nil </span><span class="cov8" title="1">{
+                return nil, err
+        }</span>
+        <span class="cov0" title="0">resp := pb.GetPostHostResponse{}
+        query := "select id, announcement_id, host_id, guest_id, title, rating, body from post where host_id = $1 or guest_id= $1"
+        rows, err := s.DB.QueryContext(ctx, query, id)
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+        <span class="cov0" title="0">for rows.Next() </span><span class="cov0" title="0">{
+                post := pb.PostRecord{}
+                var host_id int
+                var guest_id int
+                err := rows.Scan(
+                        &amp;post.PostId,
+                        &amp;post.AnnouncementId,
+                        &amp;host_id,
+                        &amp;guest_id,
+                        &amp;post.PostTitle,
+                        &amp;post.HostRating,
+                        &amp;post.PostBody)
+                if err != nil </span><span class="cov0" title="0">{
+                        return nil, err
+                }</span>
+                <span class="cov0" title="0">var host_username string
+                var guest_username string
+                query := "select username from members where id = $1"
+                err = s.DB.QueryRowContext(ctx, query, host_id).Scan(&amp;host_username)
+                if err != nil </span><span class="cov0" title="0">{
+                        return nil, err
+                }</span>
+                <span class="cov0" title="0">err = s.DB.QueryRowContext(ctx, query, guest_id).Scan(&amp;guest_username)
+                if err != nil </span><span class="cov0" title="0">{
+                        return nil, err
+                }</span>
+                <span class="cov0" title="0">post.HostUsername = host_username
+                post.GuestUsername = guest_username
+                post.HostId = int32(host_id)
+                post.GuestId = int32(guest_id)
+                resp.Posts = append(resp.Posts, &amp;post)</span>
+        }
+        <span class="cov0" title="0">return &amp;resp, nil</span>
+}
+
+func (s *PostgresRepository) AcceptUserAsHost(offerInfo *pb.AcceptOfferRequest) error <span class="cov8" title="1">{
+        ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
+        defer cancel()
+        query := `update announcement set main_host = $1, status = 'Accepted' where id = $2`
+        _, err := s.DB.ExecContext(ctx, query, offerInfo.HostId, offerInfo.AnnouncementId)
+        if err != nil </span><span class="cov0" title="0">{
+                return err
+        }</span>
+        <span class="cov8" title="1">return nil</span>
+}
+
+func (s *PostgresRepository) RejectUserOffer(offerInfo *pb.RejectOfferRequest) error <span class="cov8" title="1">{
+        ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
+        defer cancel()
+        query := `delete from announcement_offer where announcement_id = $1 and host_id = $2`
+        _, err := s.DB.ExecContext(ctx, query, offerInfo.AnnouncementId, offerInfo.HostId)
+        if err != nil </span><span class="cov0" title="0">{
+                return err
+        }</span>
+        <span class="cov8" title="1">return nil</span>
+}
+
+func (s *PostgresRepository) UpdateAnnouncementInformation(announcementInfo *pb.EditAnnouncementRequest) error <span class="cov8" title="1">{
+        ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
+        defer cancel()
+        startdate, err := time.Parse("2006-01-02", announcementInfo.StartDate)
+        if err != nil </span><span class="cov8" title="1">{
+                return err
+        }</span>
+        <span class="cov8" title="1">enddate, err := time.Parse("2006-01-02", announcementInfo.EndDate)
+        if err != nil </span><span class="cov0" title="0">{
+                return err
+        }</span>
+        <span class="cov8" title="1">query := `update announcement set  
+                description = COALESCE(NULLIF($1, ''), description),
+                startdate = $2,
+                enddate = $3,
+                city = COALESCE(NULLIF($4, ''), city),
+                state = COALESCE(NULLIF($5, ''), state),
+                country = COALESCE(NULLIF($6, ''), country),
+                numberoftravelers = COALESCE(NULLIF($7, 0), numberoftravelers)
+                where id = $8`
+        _, err = s.DB.ExecContext(ctx, query,
+                announcementInfo.Description,
+                startdate,
+                enddate,
+                announcementInfo.DestinationCity,
+                announcementInfo.DestinationState,
+                announcementInfo.DestinationCountry,
+                announcementInfo.NumberOfTravelers,
+                announcementInfo.CardId)
+        if err != nil </span><span class="cov8" title="1">{
+                return err
+        }</span>
+        <span class="cov0" title="0">query = `delete from announcement_language where announcement_id = $1`
+        _, err = s.DB.ExecContext(ctx, query, announcementInfo.CardId)
+        return err</span>
+}
+
+func (s *PostgresRepository) DeleteAnnouncement(announcement_id int) error <span class="cov8" title="1">{
+        ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
+        defer cancel()
+        query := `delete from announcement_offer where announcement_id = $1`
+        _, err := s.DB.ExecContext(ctx, query, announcement_id)
+        if err != nil </span><span class="cov8" title="1">{
+                return err
+        }</span>
+        <span class="cov8" title="1">query = `delete from chatlist where announcement_id = $1`
+        _, err = s.DB.ExecContext(ctx, query, announcement_id)
+        if err != nil </span><span class="cov8" title="1">{
+                return err
+        }</span>
+        <span class="cov8" title="1">query = `delete from announcement where id = $1`
+        _, err = s.DB.ExecContext(ctx, query, announcement_id)
+        return err</span>
+}
+
+func (s *PostgresRepository) UpdatePostInformation(postInfo *pb.EditPostRequest) error <span class="cov8" title="1">{
+        ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
+        defer cancel()
+        query := `update post set  
+                title = COALESCE(NULLIF($1, ''), title),
+                rating = COALESCE(NULLIF($2, 0), rating),
+                body = COALESCE(NULLIF($3, ''), body)
+                where id = $4`
+        _, err := s.DB.ExecContext(ctx, query,
+                postInfo.PostTitle,
+                postInfo.HostRating,
+                postInfo.PostBody,
+                postInfo.PostId)
+        return err
+}</span>
+
+func (s *PostgresRepository) GetHostId(announcement_id int) (int, error) <span class="cov8" title="1">{
+        ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
+        defer cancel()
+        var host_id int
+        query := `select main_host from announcement where id = $1`
+        err := s.DB.QueryRowContext(ctx, query, announcement_id).Scan(&amp;host_id)
+        if err != nil </span><span class="cov8" title="1">{
+                return -1, err
+        }</span>
+        <span class="cov8" title="1">return host_id, err</span>
+}
+
+func (s *PostgresRepository) UpdateHostImagesCount(user_id, imageCount int) error <span class="cov8" title="1">{
+        ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
+        defer cancel()
+        query := `update members set hostImageCount=$1 where id=$2`
+        _, err := s.DB.ExecContext(ctx, query, imageCount, user_id)
+        return err
+}</span>
+
+func (s *PostgresRepository) DeleteUserChatList(announcement_id, host_id int) error <span class="cov8" title="1">{
+        ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
+        defer cancel()
+        query := `delete from chatlist where announcement_id = $1 and host_id = $2`
+        _, err := s.DB.ExecContext(ctx, query, announcement_id, host_id)
+        if err != nil </span><span class="cov8" title="1">{
+                return err
+        }</span>
+        <span class="cov8" title="1">return nil</span>
+}
+
+func (s *PostgresRepository) UpdateChatListStatus(announcement_id, host_id int) error <span class="cov8" title="1">{
+        ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
+        defer cancel()
+        query := `update chatlist set chat_status = $1 where announcement_id = $2 and host_id != $3`
+        _, err := s.DB.ExecContext(ctx, query, 2, announcement_id, host_id)
+        if err != nil </span><span class="cov8" title="1">{
+                return err
+        }</span>
+        <span class="cov8" title="1">query = `update chatlist set chat_status = $1 where announcement_id = $2 and host_id = $3`
+        _, err = s.DB.ExecContext(ctx, query, 3, announcement_id, host_id)
+        if err != nil </span><span class="cov8" title="1">{
+                return err
+        }</span>
+        <span class="cov0" title="0">return nil</span>
+}
+
+func (s *PostgresRepository) UpdateAnnouncementStatus(announcement_id, host_id int) error <span class="cov8" title="1">{
+        ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
+        defer cancel()
+        query := `update announcement set announcement_status=$1 , main_host = $2 where id = $3`
+        _, err := s.DB.ExecContext(ctx, query, 2, host_id, announcement_id)
+        if err != nil </span><span class="cov8" title="1">{
+                return err
+        }</span>
+        <span class="cov0" title="0">return nil</span>
+}
+
+func (s *PostgresRepository) UpdateMainHostStatusInChatList(announcement_id, host_id int) error <span class="cov0" title="0">{
+        ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
+        defer cancel()
+        query := `update chatlist set chat_status = $1 where announcement_id = $2 and host_id = $3`
+        _, err := s.DB.ExecContext(ctx, query, 2, announcement_id, host_id)
+        if err != nil </span><span class="cov0" title="0">{
+                return err
+        }</span>
+        <span class="cov0" title="0">return nil</span>
+}
+</pre>
+		
+		<pre class="file" id="file1" style="display: none">package driver
+
+import (
+        "database/sql"
+        "fmt"
+
+        "github.com/spf13/viper"
+        _ "github.com/lib/pq"
+)
+
+func NewDBConnection() (*sql.DB, error) <span class="cov8" title="1">{
+        var (
+                host = viper.Get("DBHOST").(string)
+                port = viper.Get("DBPORT").(string)
+                user = viper.Get("DBUSER").(string)
+                password = viper.Get("DBPASSWORD").(string)
+                dbname = viper.Get("DBNAME").(string)
+        )
+
+        connectionString := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable", host, port, user, password, dbname)
+        db, err := sql.Open("postgres", connectionString)
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+        <span class="cov8" title="1">err = db.Ping()
+        if err != nil </span><span class="cov8" title="1">{
+                return nil, err
+        }</span>
+        <span class="cov0" title="0">return db, nil</span>
+}
+</pre>
+		
+		<pre class="file" id="file2" style="display: none">package helper
+
+import (
+        "time"
+
+        "github.com/KISS-Keep-It-Simple-Stupid/TrekDestinyBackend/services/announcement/models"
+        "github.com/aws/aws-sdk-go/aws"
+        "github.com/aws/aws-sdk-go/service/s3"
+        "github.com/golang-jwt/jwt/v5"
+        "github.com/spf13/viper"
+)
+
+func DecodeToken(token string) (*models.JwtClaims, error) <span class="cov8" title="1">{
+        claims := &amp;models.JwtClaims{}
+        key := viper.Get("JWTKEY").(string)
+        jwttoken, err := jwt.ParseWithClaims(token, claims, func(token *jwt.Token) (interface{}, error) </span><span class="cov8" title="1">{
+                return []byte(key), nil
+        }</span>)
+        <span class="cov8" title="1">if err != nil </span><span class="cov8" title="1">{
+                return nil, err
+        }</span>
+        <span class="cov8" title="1">if !jwttoken.Valid </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+        <span class="cov8" title="1">return claims, nil</span>
+}
+
+func GetImageURL(s *s3.S3, object_key string) (string, error) <span class="cov8" title="1">{
+        bucketName := viper.Get("OBJECT_STORAGE_BUCKET_NAME").(string)
+        req, _ := s.GetObjectRequest(&amp;s3.GetObjectInput{
+                Bucket: aws.String(bucketName),
+                Key:    aws.String(object_key),
+        })
+        url, err := req.Presign(1 * time.Hour)
+        if err != nil </span><span class="cov8" title="1">{
+                return "", err
+        }</span>
+        <span class="cov0" title="0">return url, nil</span>
+}
+
+func DeleteImage(s *s3.S3, object_key string) error <span class="cov8" title="1">{
+        bucketName := viper.Get("OBJECT_STORAGE_BUCKET_NAME").(string)
+        _, err := s.DeleteObject(&amp;s3.DeleteObjectInput{
+                Bucket: aws.String(bucketName),
+                Key:    aws.String(object_key),
+        })
+        return err
+}</span>
+</pre>
+		
+		</div>
+	</body>
+	<script>
+	(function() {
+		var files = document.getElementById('files');
+		var visible;
+		files.addEventListener('change', onChange, false);
+		function select(part) {
+			if (visible)
+				visible.style.display = 'none';
+			visible = document.getElementById(part);
+			if (!visible)
+				return;
+			files.value = part;
+			visible.style.display = 'block';
+			location.hash = part;
+		}
+		function onChange() {
+			select(files.value);
+			window.scrollTo(0, 0);
+		}
+		if (location.hash != "") {
+			select(location.hash.substr(1));
+		}
+		if (!visible) {
+			select("file0");
+		}
+	})();
+	</script>
+</html>

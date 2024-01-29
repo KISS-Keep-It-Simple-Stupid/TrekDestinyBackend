@@ -578,53 +578,38 @@ func TestGetMyPostDetails(t *testing.T) {
 	assert.NoError(t, err)
 }
 
-// func TestGetPostHostDetails(t *testing.T) {
-// 	mockDB, mock, err := sqlmock.New()
-// 	if err != nil {
-// 		t.Fatalf("Error creating mock database: %v", err)
-// 	}
-// 	defer mockDB.Close()
+func TestGetPostHostDetails(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("Error creating mock DB: %v", err)
+	}
+	defer db.Close()
 
-// 	repo := &PostgresRepository{DB: mockDB}
+	repo := &PostgresRepository{DB: db}
 
-// 	hostID := 1
+	username := "testuser"
+	hostID := 1
+	guestID := 2
 
-// 	mock.ExpectQuery(`^select id, announcement_id, host_id, guest_id, title, rating, body from post where host_id = \$1$`).
-// 		WithArgs(hostID).
-// 		WillReturnRows(sqlmock.NewRows([]string{"id", "announcement_id", "host_id", "guest_id", "title", "rating", "body"}).
-// 			AddRow(1, 1, hostID, 2, "Post Title", 4.5, "Post Body"))
+	mock.ExpectQuery("SELECT id FROM members WHERE username = ?").
+		WithArgs(username).
+		WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(123))
 
-// 	mock.ExpectQuery(`^select username from members where id = \$1$`).
-// 		WithArgs(hostID).
-// 		WillReturnRows(sqlmock.NewRows([]string{"username"}).
-// 			AddRow("HostUsername"))
+	mock.ExpectQuery("SELECT id, announcement_id, host_id, guest_id, title, rating, body FROM post WHERE host_id = ? OR guest_id= ?").
+		WithArgs(123).
+		WillReturnRows(sqlmock.NewRows([]string{"id", "announcement_id", "host_id", "guest_id", "title", "rating", "body"}).
+			AddRow(1, 1, hostID, guestID, "Title1", 4.5, "Body1").
+			AddRow(2, 2, hostID, guestID, "Title2", 3.5, "Body2"))
 
-// 	mock.ExpectQuery(`^select username from members where id = \$1$`).
-// 		WithArgs(2).
-// 		WillReturnRows(sqlmock.NewRows([]string{"username"}).
-// 			AddRow("GuestUsername"))
+	mock.ExpectQuery("SELECT username FROM members WHERE id = ?").
+		WithArgs(hostID).
+		WillReturnRows(sqlmock.NewRows([]string{"username"}).AddRow("HostUsername"))
+	mock.ExpectQuery("SELECT username FROM members WHERE id = ?").
+		WithArgs(guestID).
+		WillReturnRows(sqlmock.NewRows([]string{"username"}).AddRow("GuestUsername"))
 
-// 	_, _ = repo.GetPostHostDetails(hostID)
-
-// 	mock.ExpectQuery(`^select id, announcement_id, host_id, guest_id, title, rating, body from post where host_id = \$1$`).
-// 		WithArgs(hostID).
-// 		WillReturnError(errors.New("database error"))
-
-// 	_, err = repo.GetPostHostDetails(hostID)
-// 	if err == nil {
-// 		t.Error("Expected error, but got nil")
-// 	}
-
-// 	mock.ExpectQuery(`^select id, announcement_id, host_id, guest_id, title, rating, body from post where host_id = \$1$`).
-// 		WithArgs(hostID).
-// 		WillReturnRows(sqlmock.NewRows([]string{"id", "announcement_id", "host_id", "guest_id", "title", "rating", "body"}).
-// 			AddRow(1, 1, hostID, 2, "Invalid Post Title", "Invalid Rating", "Invalid Post Body"))
-
-// 	_, err = repo.GetPostHostDetails(hostID)
-// 	if err == nil {
-// 		t.Error("Expected error, but got nil")
-// 	}
-// }
+	_, _ = repo.GetPostHostDetails(username)
+}
 
 func TestAcceptUserAsHost(t *testing.T) {
 	mockDB, mock, err := sqlmock.New()
@@ -984,4 +969,23 @@ func TestUpdateAnnouncementStatus(t *testing.T) {
 	if err == nil {
 		t.Error("Expected error, but got nil")
 	}
+}
+
+func TestUpdateMainHostStatusInChatList(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("Error creating mock DB: %v", err)
+	}
+	defer db.Close()
+
+	repo := &PostgresRepository{DB: db}
+
+	announcementID := 1
+	hostID := 2
+
+	mock.ExpectExec("UPDATE chatlist SET chat_status = ? WHERE announcement_id = ? AND host_id = ?").
+		WithArgs(2, announcementID, hostID).
+		WillReturnResult(sqlmock.NewResult(0, 1))
+
+	_ = repo.UpdateMainHostStatusInChatList(announcementID, hostID)
 }
