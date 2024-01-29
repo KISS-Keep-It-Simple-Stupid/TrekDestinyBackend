@@ -118,6 +118,12 @@ func (s *Repository) EditProfile(ctx context.Context, r *pb.EditProfileRequest) 
 			return nil, respErr
 		}
 	}
+	err = s.DB.DeleteUserIntrests(claims.UserID)
+	if err != nil {
+		respErr := errors.New("internal server error while deleting user intrests - userprofile service")
+		log.Println(err)
+		return nil, respErr
+	}
 	for _, interest := range r.Interests {
 		err := s.DB.InsertUserInterest(claims.UserID, interest)
 		if err != nil {

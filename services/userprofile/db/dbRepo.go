@@ -21,4 +21,5 @@ type Repository interface {
 	InsertUserInterest(user_id int, interest string) error
 	GetLanguagesOfUser(user_id int) ([]string, error)
 	GetInterestsOfUser(user_id int) ([]string, error)
+	DeleteUserIntrests(user_id int) error
 }

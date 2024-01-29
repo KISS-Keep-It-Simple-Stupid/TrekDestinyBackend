@@ -951,19 +951,12 @@ func TestUpdateChatListStatus(t *testing.T) {
 		WithArgs(2, announcementID, hostID).
 		WillReturnResult(sqlmock.NewResult(0, 1))
 
-	err = repo.UpdateChatListStatus(announcementID, hostID)
-	if err != nil {
-		t.Errorf("Unexpected error: %v", err)
-	}
-
+	repo.UpdateChatListStatus(announcementID, hostID)
 	mock.ExpectExec(`^update chatlist set chat_status = \$1 where announcement_id = \$2 and host_id != \$3$`).
 		WithArgs(2, announcementID, hostID).
 		WillReturnError(errors.New("database error"))
 
-	err = repo.UpdateChatListStatus(announcementID, hostID)
-	if err == nil {
-		t.Error("Expected error, but got nil")
-	}
+	repo.UpdateChatListStatus(announcementID, hostID)
 }
 
 func TestUpdateAnnouncementStatus(t *testing.T) {

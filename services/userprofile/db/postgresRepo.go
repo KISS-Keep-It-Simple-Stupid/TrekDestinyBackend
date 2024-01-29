@@ -367,6 +367,14 @@ func (s *PostgresRepository) InsertUserInterest(user_id int, interest string) er
 	return err
 }
 
+func (s *PostgresRepository) DeleteUserIntrests(user_id int) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
+	defer cancel()
+	query := `delete from member_interest where user_id = $1 `
+	_, err := s.DB.ExecContext(ctx, query, user_id)
+	return err
+}
+
 func (s *PostgresRepository) GetLanguagesOfUser(user_id int) ([]string, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
 	defer cancel()
