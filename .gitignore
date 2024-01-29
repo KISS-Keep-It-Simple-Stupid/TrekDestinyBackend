@@ -27,3 +27,4 @@ go.work
 
 *.pem
 *.key
+*.txt

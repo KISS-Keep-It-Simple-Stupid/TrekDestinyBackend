@@ -33,4 +33,30 @@ elif [[ $arg == "install-dependencies" ]]; then
         cd services/$2
         go mod download 
     fi
+
+elif [[ $arg == "test-all" ]]; then
+        rm coverage.txt
+        cd gateway
+        go test ./... -cover >> ../coverage.txt
+        cd ../services/announcement
+        go test ./... -cover >> ../../coverage.txt
+        cd ../userprofile
+        go test ./... -cover >> ../../coverage.txt
+        cd ../authentication
+        go test ./... -cover >> ../../coverage.txt
+        cd ../chat
+        go test ./... -cover >> ../../coverage.txt 
+        cd ../notification
+        go test ./... -cover >> ../../coverage.txt 
+
+        cd ../../
+
+        echo "-------------------    ALL FILES   --------------------" 
+        cat coverage.txt | grep %
+        echo "------------------- FINAL COVERAGE --------------------"
+        count=$(cat coverage.txt | grep % | wc -l)
+        echo "TOTAL TESTS : $count"    
+        mean=$(cat coverage.txt | grep % | awk '{print $5}' | tr -d % | awk '{ sum += $1; n++ } END { if (n > 0) print sum / n; }')
+        echo "FINAL COVERAGE : $mean"
+
 fi

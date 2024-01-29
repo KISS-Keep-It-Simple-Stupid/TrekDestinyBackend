@@ -314,7 +314,7 @@ func (s *Repository) GetMyPost(ctx context.Context, r *pb.GetMyPostRequest) (*pb
 			err := errors.New("internal error while getting user image from object storage - announcement service")
 			return nil, err
 		}
-		post.HostImage, err = helper.GetImageURL(s.S3, fmt.Sprintf("post-%d", post.HostId))
+		post.HostImage, err = helper.GetImageURL(s.S3, fmt.Sprintf("user-%d", post.HostId))
 		if err != nil {
 			log.Println(err.Error())
 			err := errors.New("internal error while getting user image from object storage - announcement service")
