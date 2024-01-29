@@ -2,51 +2,28 @@ package helper
 
 import (
 	"testing"
-	"time"
 
+	"github.com/KISS-Keep-It-Simple-Stupid/TrekDestinyBackend/services/userprofile/models"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
-	"github.com/dgrijalva/jwt-go"
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/spf13/viper"
 )
 
-type JwtClaims struct {
-	jwt.StandardClaims
-	CustomField string `json:"customField"`
-}
-
 func TestDecodeToken(t *testing.T) {
-	originalJWTKey := viper.GetString("JWTKEY")
-	defer func() {
-		viper.Set("JWTKEY", originalJWTKey)
-	}()
+	// Set up the key for testing (replace with your actual key)
+	viper.Set("JWTKEY", "your_test_key")
+	defer viper.Reset()
 
-	viper.Set("JWTKEY", "mockJWTKey")
-
-	mockClaims := &JwtClaims{
-		StandardClaims: jwt.StandardClaims{
-			ExpiresAt: time.Now().Add(time.Hour).Unix(),
-		},
-		CustomField: "example",
-	}
-	mockToken := generateMockToken(mockClaims)
-
-	_, _ = DecodeToken(mockToken)
-
-	invalidToken := "invalidToken"
-	_, _ = DecodeToken(invalidToken)
-
-	viper.Set("JWTKEY", "expiredJWTKey")
-	expiredToken := generateMockToken(mockClaims)
-	_, _ = DecodeToken(expiredToken)
-}
-
-func generateMockToken(claims jwt.Claims) string {
+	// Create a sample JWT token
+	claims := &models.JwtClaims{}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	key := []byte(viper.GetString("JWTKEY"))
-	signedToken, _ := token.SignedString(key)
-	return signedToken
+	signedToken, err := token.SignedString([]byte(viper.GetString("JWTKEY")))
+	if err != nil {
+		t.Fatalf("Failed to sign JWT token: %v", err)
+	}
+	DecodeToken(signedToken)
 }
 
 func TestGetImageURL(t *testing.T) {
