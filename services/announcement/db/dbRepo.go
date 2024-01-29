@@ -18,7 +18,7 @@ type Repository interface {
 	InsertPost(postInfo *pb.CreatePostRequest) error
 	GetLastPostId() (int, error)
 	GetMyPostDetails(guest_id int) (*pb.GetMyPostResponse, error)
-	GetPostHostDetails(host_id int) (*pb.GetPostHostResponse, error)
+	GetPostHostDetails(username string) (*pb.GetPostHostResponse, error)
 	AcceptUserAsHost(offerInfo *pb.AcceptOfferRequest) error
 	RejectUserOffer(offerInfo *pb.RejectOfferRequest) error
 	UpdateAnnouncementInformation(announcementInfo *pb.EditAnnouncementRequest) error

@@ -335,7 +335,7 @@ func (s *Repository) GetPostHost(ctx context.Context, r *pb.GetPostHostRequest) 
 		return resp, nil
 	}
 
-	resp, err := s.DB.GetPostHostDetails(int(r.HostId))
+	resp, err := s.DB.GetPostHostDetails(r.Username)
 	if err != nil {
 		log.Println(err.Error())
 		err := errors.New("internal error while getting post info - announcement service")

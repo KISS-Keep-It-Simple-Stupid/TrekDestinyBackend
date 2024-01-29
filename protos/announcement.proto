@@ -126,7 +126,7 @@ message getMyPostResponse {
 
 message getPostHostRequest {
     string AccessToken = 1;
-    int32 HostId = 2;
+    string username = 2;
 }
 
 message getPostHostResponse {

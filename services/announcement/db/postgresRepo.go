@@ -379,12 +379,16 @@ func (s *PostgresRepository) GetMyPostDetails(guest_id int) (*pb.GetMyPostRespon
 	return &resp, nil
 }
 
-func (s *PostgresRepository) GetPostHostDetails(host_id int) (*pb.GetPostHostResponse, error) {
+func (s *PostgresRepository) GetPostHostDetails(username string) (*pb.GetPostHostResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
 	defer cancel()
+	id, err := s.GetIdFromUsername(username)
+	if err != nil {
+		return nil, err
+	}
 	resp := pb.GetPostHostResponse{}
-	query := "select id, announcement_id, host_id, guest_id, title, rating, body from post where host_id = $1"
-	rows, err := s.DB.QueryContext(ctx, query, host_id)
+	query := "select id, announcement_id, host_id, guest_id, title, rating, body from post where host_id = $1 or guest_id= $1"
+	rows, err := s.DB.QueryContext(ctx, query, id)
 	if err != nil {
 		return nil, err
 	}
