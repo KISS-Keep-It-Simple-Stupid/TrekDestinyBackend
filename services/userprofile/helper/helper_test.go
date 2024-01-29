@@ -2,23 +2,72 @@ package helper
 
 import (
 	"testing"
+	"time"
 
-	"github.com/KISS-Keep-It-Simple-Stupid/TrekDestinyBackend/services/userprofile/models"
-	"github.com/golang-jwt/jwt/v5"
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/dgrijalva/jwt-go"
 	"github.com/spf13/viper"
 )
 
-func TestDecodeToken(t *testing.T) {
-	// Set up the key for testing (replace with your actual key)
-	viper.Set("JWTKEY", "your_test_key")
-	defer viper.Reset()
+type JwtClaims struct {
+	jwt.StandardClaims
+	CustomField string `json:"customField"`
+}
 
-	// Create a sample JWT token
-	claims := &models.JwtClaims{}
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	signedToken, err := token.SignedString([]byte(viper.GetString("JWTKEY")))
-	if err != nil {
-		t.Fatalf("Failed to sign JWT token: %v", err)
+func TestDecodeToken(t *testing.T) {
+	originalJWTKey := viper.GetString("JWTKEY")
+	defer func() {
+		viper.Set("JWTKEY", originalJWTKey)
+	}()
+
+	viper.Set("JWTKEY", "mockJWTKey")
+
+	mockClaims := &JwtClaims{
+		StandardClaims: jwt.StandardClaims{
+			ExpiresAt: time.Now().Add(time.Hour).Unix(),
+		},
+		CustomField: "example",
 	}
-	DecodeToken(signedToken)
+	mockToken := generateMockToken(mockClaims)
+
+	_, _ = DecodeToken(mockToken)
+
+	invalidToken := "invalidToken"
+	_, _ = DecodeToken(invalidToken)
+
+	viper.Set("JWTKEY", "expiredJWTKey")
+	expiredToken := generateMockToken(mockClaims)
+	_, _ = DecodeToken(expiredToken)
+}
+
+func generateMockToken(claims jwt.Claims) string {
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	key := []byte(viper.GetString("JWTKEY"))
+	signedToken, _ := token.SignedString(key)
+	return signedToken
+}
+
+func TestGetImageURL(t *testing.T) {
+	originalBucketName := viper.GetString("OBJECT_STORAGE_BUCKET_NAME")
+	defer func() {
+		viper.Set("OBJECT_STORAGE_BUCKET_NAME", originalBucketName)
+	}()
+
+	viper.Set("OBJECT_STORAGE_BUCKET_NAME", "mockBucketName")
+
+	mockS3Client := createMockS3Client()
+
+	objectKey := "mockObjectKey"
+	_, _ = GetImageURL(mockS3Client, objectKey)
+
+	viper.Set("OBJECT_STORAGE_BUCKET_NAME", "")
+	_, _ = GetImageURL(mockS3Client, objectKey)
+}
+
+func createMockS3Client() *s3.S3 {
+	return s3.New(session.Must(session.NewSession(&aws.Config{
+		Region: aws.String("us-west-2"),
+	})))
 }

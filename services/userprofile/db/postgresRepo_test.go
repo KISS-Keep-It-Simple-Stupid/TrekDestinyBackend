@@ -3,6 +3,7 @@ package db
 import (
 	"database/sql"
 	"errors"
+	"log"
 	"testing"
 	"time"
 
@@ -459,38 +460,18 @@ func TestPostgresRepository_GetChatList(t *testing.T) {
 	repo := &PostgresRepository{DB: db}
 
 	expectedGuestID := 1
-	expectedRows := sqlmock.NewRows([]string{"id", "host_id", "guest_id", "announcement_id"}).
-		AddRow(1, 2, expectedGuestID, 3).
-		AddRow(2, expectedGuestID, 4, 5)
+	expectedRows := sqlmock.NewRows([]string{"id", "host_id", "guest_id", "announcement_id", "chat_status"}).
+		AddRow(1, 2, expectedGuestID, 3, 1).
+		AddRow(2, expectedGuestID, 4, 5, 2)
 
-	mock.ExpectQuery("select id, host_id, guest_id, announcement_id from chatlist where guest_id = ? or host_id = ?").
+	mock.ExpectQuery("select id ,host_id , guest_id, announcement_id , chat_status from chatlist where guest_id = $1 or host_id = $2").
 		WithArgs(expectedGuestID, expectedGuestID).
 		WillReturnRows(expectedRows)
 
 	mockObj := new(s3.S3)
 
-	_, _ = repo.GetChatList(expectedGuestID, mockObj)
-
-	_ = &pb.ChatListResponse{
-		Users: []*pb.ChatList{
-			{
-				ID:            1,
-				IsHost:        "no",
-				HostID:        2,
-				Username:      "mocked_username",
-				AnnoucementId: 3,
-				Image:         "mocked_image_url",
-			},
-			{
-				ID:            2,
-				IsHost:        "yes",
-				HostID:        4,
-				Username:      "mocked_username",
-				AnnoucementId: 5,
-				Image:         "mocked_image_url",
-			},
-		},
-	}
+	_, err = repo.GetChatList(expectedGuestID, mockObj)
+	log.Printf("%s", err)
 }
 
 func TestPostgresRepository_GetUserNameByID(t *testing.T) {
@@ -688,4 +669,86 @@ func TestPostgresRepository_InsertUserInterest(t *testing.T) {
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
 	}
+}
+
+func TestPostgresRepository_GetLanguagesOfUser(t *testing.T) {
+	mockDB, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("Error creating mock database: %v", err)
+	}
+	defer mockDB.Close()
+
+	repo := &PostgresRepository{DB: mockDB}
+
+	mock.ExpectQuery(`^select language from member_language where user_id = \$1$`).
+		WithArgs(1).
+		WillReturnRows(sqlmock.NewRows([]string{"language"}).
+			AddRow("English").
+			AddRow("Spanish"))
+
+	languages, err := repo.GetLanguagesOfUser(1)
+	if err != nil {
+		t.Errorf("Unexpected error: %v", err)
+	}
+	if len(languages) != 2 {
+		t.Errorf("Expected 2 languages, but got %d", len(languages))
+	}
+
+	mock.ExpectQuery(`^select language from member_language where user_id = \$1$`).
+		WithArgs(2).
+		WillReturnError(err)
+
+	_, err = repo.GetLanguagesOfUser(2)
+	if err == nil {
+		t.Error("Expected error, but got nil")
+	}
+
+	mock.ExpectQuery(`^select language from member_language where user_id = \$1$`).
+		WithArgs(3).
+		WillReturnRows(sqlmock.NewRows([]string{"language"}).
+			AddRow("English").
+			AddRow("Invalid Language"))
+
+	_, _ = repo.GetLanguagesOfUser(3)
+}
+
+func TestPostgresRepository_GetInterestsOfUser(t *testing.T) {
+	mockDB, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("Error creating mock database: %v", err)
+	}
+	defer mockDB.Close()
+
+	repo := &PostgresRepository{DB: mockDB}
+
+	mock.ExpectQuery(`^select interest from member_interest where user_id = \$1$`).
+		WithArgs(1).
+		WillReturnRows(sqlmock.NewRows([]string{"interest"}).
+			AddRow("Music").
+			AddRow("Travel"))
+
+	interests, err := repo.GetInterestsOfUser(1)
+	if err != nil {
+		t.Errorf("Unexpected error: %v", err)
+	}
+	if len(interests) != 2 {
+		t.Errorf("Expected 2 interests, but got %d", len(interests))
+	}
+
+	mock.ExpectQuery(`^select interest from member_interest where user_id = \$1$`).
+		WithArgs(2).
+		WillReturnError(err)
+
+	_, err = repo.GetInterestsOfUser(2)
+	if err == nil {
+		t.Error("Expected error, but got nil")
+	}
+
+	mock.ExpectQuery(`^select interest from member_interest where user_id = \$1$`).
+		WithArgs(3).
+		WillReturnRows(sqlmock.NewRows([]string{"interest"}).
+			AddRow("Music").
+			AddRow("Invalid Interest"))
+
+	_, _ = repo.GetInterestsOfUser(3)
 }
